@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include "../inc/lodepng.h"
 #include "../inc/hist.h"
 
@@ -50,7 +52,7 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     grid.x = (rows - 1) / block.x + 1;
     grid.y = (cols - 1) / block.y + 1;
     /* printf("%d - %d\n", grid.x, grid.y); */
-    gpuFunc<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
+    (*gpuFunc)<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
     CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) * 256, cudaMemcpyDeviceToHost));
     CHECK(cudaFree(d_colors));
     CHECK(cudaFree(d_buckets));

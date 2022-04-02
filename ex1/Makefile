@@ -1,3 +1,4 @@
+FILENAME	 = hist
 
 obj_dir		 = ./obj
 src_dir   	 = ./src
@@ -16,18 +17,21 @@ CXX 	= nvcc
 NVCXX 	= nvcc
 
 NVCXXFLAGS	= 
-CXXFLAGS	= ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11" 
-LINKERFLAGS = -lcuda -lcudart
+CXXFLAGS	= -ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11 " -Lcuda -Lcudart
+LINKERFLAGS 	= ccbin g++ -Xcompiler -lcuda -lcudart
 
 all: $(obj_dir) hist
 
-%.o: %.cpp
-	$(CXX) -I $(inc_dir) $(CXXFLAGS) -c $< -o $@
-%.o: %.cu
-	$(NVCXX) -I $(inc_dir) $(NVCXXFLAGS) -c $< -o $@ 	
+$(obj_dir)/%.o: $(src_dir)/%.cpp
+	$(CXX) -I $(inc_dir) $(CXXFLGAS) -c $< -o $@
+$(obj_dir)/%.o: $(src_dir)/%.cu
+	$(NVCXX) $(NVCXXFLAGS) -c $< -o $@ 	
 
 hist : $(local_objects)
-	$(CXX) $(LINKERFLAGS) -o $(local_objects) -o hist
+	$(CXX) $(LINKERFLAGS) -o $(local_objects) -o $(FILENAME) 
 
-obj_dir:
+$(obj_dir):
 	mkdir -p $(obj_dir)
+
+clean:
+	rm -rf $(obj_dir) $(FILENAME)

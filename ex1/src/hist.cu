@@ -8,8 +8,8 @@ __global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned 
     if (i < len) {
         // get wether rgb or alpha value 
         unsigned int color = i % 4;
-        unsigned int entry = 256*i + colors[i];
-        atomicAdd(&buckets[entry], 1);
+        unsigned int entry = 256*color + colors[i];
+	atomicAdd(&buckets[entry], 1);
     }
 }
 
@@ -20,7 +20,7 @@ __global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned i
     if (i < len) {
         // get wether rgb or alpha value 
         unsigned int color = i % 4;
-        unsigned int entry = 256*i + colors[i];
-        atomicAdd(&buckets[entry], 1);
+        unsigned int entry = 256*color + colors[i];
+	atomicAdd(&buckets[entry], 1);
     }
 }
