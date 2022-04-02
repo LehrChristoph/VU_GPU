@@ -1,30 +1,33 @@
 
 obj_dir		 = ./obj
 src_dir   	 = ./src
+inc_dir		 = ./inc
 
 LIB_OBJ_PATH	 = $(obj_dir)/$(LIBNAME)
 
 srcs		 = $(wildcard $(src_dir)/*.cu)
-srcs	        += $(wildcard $(src_dir)/*.cpp) 
-incs 		 = $(wildcard $(src_dir)/*.h)
+srcs	    += $(wildcard $(src_dir)/*.cpp) 
+incs 		 = $(wildcard $(inc_dir)/*.h)
 
 local_objects_tmp	= $(srcs:$(src_dir)%.cu=$(obj_dir)%.o)
 local_objects		= $(local_objects_tmp:$(src_dir)%.cpp=$(obj_dir)%.o)
 
-CXX := nvcc
+CXX 	= nvcc
+NVCXX 	= nvcc
 
-CXXFLAGS := -W -Wall -Wextra -ansi -pedantic -O3 
+NVCXXFLAGS	= 
+CXXFLAGS	= ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11" 
+LINKERFLAGS = -lcuda -lcudart
 
-all: hist
+all: $(obj_dir) hist
 
 %.o: %.cpp
-	@mkdir -p `dirname $@`
-	$(CXX) -I $(src_dir) $(CXXFLAGS) -c $< -o $@
+	$(CXX) -I $(inc_dir) $(CXXFLAGS) -c $< -o $@
 %.o: %.cu
-	$(CXX) -I $(src_dir) $(CXXFLAGS) -c $< -o $@ 	
+	$(NVCXX) -I $(inc_dir) $(NVCXXFLAGS) -c $< -o $@ 	
 
 hist : $(local_objects)
-	$(CXX) -o $(local_objects) -o hist
+	$(CXX) $(LINKERFLAGS) -o $(local_objects) -o hist
 
-clean:
-	rm -f unittest benchmark pngdetail showpng lodepng_unittest.o lodepng_benchmark.o lodepng.o lodepng_util.o pngdetail.o examples/example_sdl.o
+obj_dir:
+	mkdir -p $(obj_dir)
