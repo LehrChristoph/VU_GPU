@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
         printf("\t2: intelligent gpu\n");
         return 1;
     }
-    int impl = atoi(argv[2]);
+    unsigned char impl = atoi(argv[2]);
 
-    if (impl < 0 || impl > 2){
+    if ( impl > 2){
         printf("Unknown implementation %d\n", impl);
         return 1;
     }
@@ -55,12 +55,11 @@ int main(int argc, char** argv) {
     unsigned int* buckets = (unsigned int*) calloc(256*4, sizeof(unsigned int));
     if (impl == 0) {
         cpuOnly(colors, buckets, in_image.size());
-    //} else if (impl == 1) {
-    //    runOnGpu(colors, buckets, in_image.size(), height, width, gpuNaive);
-    //} else if (impl == 2) {
-    //    runOnGpu(colors, buckets, in_image.size(), height, width, gpuGood);
+    } else {
+        runOnGpu(colors, buckets, in_image.size(), height, width, impl);
     } 
-    for (int i = 0; i < 256; i++) {
+    
+    for(int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
     }
     

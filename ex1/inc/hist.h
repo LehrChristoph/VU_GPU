@@ -7,11 +7,7 @@
 
 void runOnGpu(const unsigned char* colors, unsigned int* buckets, 
                 unsigned int len, unsigned int rows, unsigned int cols, 
-                void(*gpuFunc)(unsigned char*, unsigned int*, unsigned int, unsigned int, unsigned int)
+                unsigned char compute_function)
     );
-
-__global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols);
-
-__global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols);
 
 #endif
