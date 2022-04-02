@@ -7,7 +7,6 @@
 
 void runOnGpu(const unsigned char* colors, unsigned int* buckets, 
                 unsigned int len, unsigned int rows, unsigned int cols, 
-                unsigned char compute_function)
-    );
+                unsigned char compute_function);
 
 #endif
