@@ -18,7 +18,7 @@ NVCXX 	= nvcc
 
 NVCXXFLAGS	= 
 CXXFLAGS	= -ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11 " -Lcuda -Lcudart
-LINKERFLAGS 	= ccbin g++ -Xcompiler -lcuda -lcudart
+LINKERFLAGS 	= in g++ -Xcompiler -lcuda -lcudart
 
 all: $(obj_dir) hist
 
@@ -28,7 +28,7 @@ $(obj_dir)/%.o: $(src_dir)/%.cu
 	$(NVCXX) $(NVCXXFLAGS) -c $< -o $@ 	
 
 hist : $(local_objects)
-	$(CXX) $(LINKERFLAGS) -o $(local_objects) -o $(FILENAME) 
+	$(CXX) $(CXXFLAGS) $(local_objects) -o $(FILENAME) 
 
 $(obj_dir):
 	mkdir -p $(obj_dir)

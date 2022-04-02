@@ -21,7 +21,7 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
                 void(*gpuFunc)(unsigned char*, unsigned int*, unsigned int, unsigned int, unsigned int)
     ) {
     unsigned char* d_colors;
-    int* d_buckets;
+    unsigned int* d_buckets;
     CHECK(cudaMalloc(&d_colors, sizeof(unsigned char) * len));
     CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 4* 256));
     CHECK(cudaMemcpy(d_colors, colors, sizeof(unsigned char) * len, cudaMemcpyHostToDevice));

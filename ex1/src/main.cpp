@@ -55,10 +55,10 @@ int main(int argc, char** argv) {
     unsigned int* buckets = (unsigned int*) calloc(256*4, sizeof(unsigned int));
     if (impl == 0) {
         cpuOnly(colors, buckets, in_image.size());
-    } else if (impl == 1) {
-        runOnGpu(colors, buckets, in_image.size(), height, width, gpuNaive);
-    } else if (impl == 2) {
-        runOnGpu(colors, buckets, in_image.size(), height, width, gpuGood);
+    //} else if (impl == 1) {
+    //    runOnGpu(colors, buckets, in_image.size(), height, width, gpuNaive);
+    //} else if (impl == 2) {
+    //    runOnGpu(colors, buckets, in_image.size(), height, width, gpuGood);
     } 
     for (int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
