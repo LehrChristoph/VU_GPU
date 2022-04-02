@@ -17,25 +17,23 @@
     }
     
 __global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
-    printf("Using naive GPU implementation\n");
     int i = threadIdx.x + blockDim.x * threadIdx.y + blockDim.x * blockDim.y * blockIdx.x + blockDim.x * blockDim.y * blockIdx.y * gridDim.x;
     if (i < len) {
         // get wether rgb or alpha value 
-        unsigned int color = i % 4;
-        unsigned int entry = 256*color + colors[i];
-	atomicAdd(&buckets[entry], 1);
+        //unsigned int color = i % 4;
+        //unsigned int entry = 256*color + colors[i];
+	    atomicAdd(&buckets[i], 1);
     }
 }
 
 __global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
-    printf("Using good GPU implementation\n");
     // TODO
     int i = threadIdx.x + blockDim.x * threadIdx.y + blockDim.x * blockDim.y * blockIdx.x + blockDim.x * blockDim.y * blockIdx.y * gridDim.x;
     if (i < len) {
         // get wether rgb or alpha value 
         unsigned int color = i % 4;
         unsigned int entry = 256*color + colors[i];
-	atomicAdd(&buckets[entry], 1);
+	    atomicAdd(&buckets[entry], 1);
     }
 }
 
@@ -61,10 +59,12 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     /* printf("%d - %d\n", grid.x, grid.y); */
     if(compute_function == 1)
     {
+        printf("Using naive GPU implementation\n");
         gpuNaive<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
     }
     else
     {
+        printf("Using good GPU implementation\n");
         gpuGood<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
     }
     CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) * 256, cudaMemcpyDeviceToHost));
