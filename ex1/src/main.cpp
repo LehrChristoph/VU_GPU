@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "../inc/lodepng.h"
 #include "../inc/hist.h"
-#include <time.h>
+#include <sys/time.h>
 
 double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int len) {
     printf("Using CPU implementation\n");
@@ -26,8 +26,8 @@ double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int 
     }
 
     gettimeofday(&end,NULL);
-    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6)
-    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6)
+    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6);
+    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6);
     return end_seconds - start_seconds;
 }
 

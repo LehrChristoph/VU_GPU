@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 #include <cmath>
 #include "../inc/hist.h"
+#include <sys/time.h>
 
 #define CHECK(call)                                                     \
     {                                                                   \
@@ -66,7 +67,8 @@ __global__ void gpuGood_MergeBlocks(unsigned int* buckets, unsigned int blockcnt
         for(unsigned int j=1; j < blockcnt; j++)
         {
             unsigned int entry = i+ j *4*256;
-            atomicAdd(&buckets[i], buckets[entry]);
+            //atomicAdd(&buckets[i], buckets[entry]);
+	    buckets[i] += buckets[entry];
         }
     }
 }
@@ -77,7 +79,7 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     ) {
     if(compute_function > 2)
     {
-        return;
+        return -1 ;
     }
 
     struct timeval start, end;
@@ -89,7 +91,7 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     CHECK(cudaMemcpy(d_colors, colors, sizeof(unsigned char) * len, cudaMemcpyHostToDevice));
         
     dim3 grid, block;
-    block.x = 128;
+    block.x = 256;
     block.y = 1;
     grid.x = ceil((double)(rows*cols)/ block.x); 
     grid.y = 1;
@@ -127,8 +129,8 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     }
     CHECK(cudaFree(d_colors));
 
-    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6)
-    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6)
+    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6);
+    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6);
     return end_seconds - start_seconds;
 
 }
