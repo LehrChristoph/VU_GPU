@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     // convert vector to array
     unsigned char* colors = &in_image[0];
     unsigned int* buckets = (unsigned int*) calloc(256*4, sizeof(unsigned int));
-    double runtime :=0;
+    double runtime =0;
     for(unsigned int i =0; i < repetitions; i++)
     {
         if (impl == 0) {
