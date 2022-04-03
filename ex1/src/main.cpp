@@ -32,23 +32,23 @@ double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int 
 }
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
-        printf("Usage: %s <image> <implementation (0-2)>\n", argv[0]);
+    if (argc != 4) {
+        printf("Usage: %s <implementation (0-2)> <repetitions> <image>\n", argv[0]);
         printf("Implementations:\n");
         printf("\t0: cpu only\n");
         printf("\t1: naive gpu (from lecture)\n");
         printf("\t2: intelligent gpu\n");
         return 1;
     }
-    unsigned char impl = atoi(argv[2]);
-
+    unsigned char impl = atoi(argv[1]);
+    unsigned int repetitions = atoi(argv[2]);
     if ( impl > 2){
         printf("Unknown implementation %d\n", impl);
         return 1;
     }
 
     // Read the arguments
-    const char* input_file = argv[1];
+    const char* input_file = argv[3];
 
     std::vector<unsigned char> in_image;
     unsigned int width, height;
@@ -62,16 +62,19 @@ int main(int argc, char** argv) {
     // convert vector to array
     unsigned char* colors = &in_image[0];
     unsigned int* buckets = (unsigned int*) calloc(256*4, sizeof(unsigned int));
-    double runtime;
-    if (impl == 0) {
-        runtime = cpuOnly(colors, buckets, in_image.size());
-    } else {
-        runtime = runOnGpu(colors, buckets, in_image.size(), height, width, impl);
-    } 
-    
+    double runtime :=0;
+    for(unsigned int i =0; i < repetitions; i++)
+    {
+        if (impl == 0) {
+            runtime += cpuOnly(colors, buckets, in_image.size());
+        } else {
+            runtime += runOnGpu(colors, buckets, in_image.size(), height, width, impl);
+        } 
+        memset(buckets, 0, 256*4 *sizeof(unsigned int));
+    }
     for(int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
     }
-    printf("Runtime %lf\n", runtime);  
+    printf("Runtime total:%lf, avg:%lf\n", runtime, runtime/repetitions);  
     free(buckets);
 }
