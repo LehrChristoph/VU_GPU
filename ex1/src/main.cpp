@@ -11,15 +11,24 @@
 #include <stdlib.h>
 #include "../inc/lodepng.h"
 #include "../inc/hist.h"
+#include <time.h>
 
-void cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int len) {
+double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int len) {
     printf("Using CPU implementation\n");
+    struct timeval start, end;
+    gettimeofday(&start,NULL);
+    
     for (unsigned int i = 0; i < len; i++) {
         // get wether rgb or alpha value 
         unsigned int color = i % 4;
         unsigned int entry = 256*color + colors[i];
-	buckets[entry]++;
+	    buckets[entry]++;
     }
+
+    gettimeofday(&end,NULL);
+    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6)
+    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6)
+    return end_seconds - start_seconds;
 }
 
 int main(int argc, char** argv) {
@@ -53,15 +62,16 @@ int main(int argc, char** argv) {
     // convert vector to array
     unsigned char* colors = &in_image[0];
     unsigned int* buckets = (unsigned int*) calloc(256*4, sizeof(unsigned int));
+    double runtime;
     if (impl == 0) {
-        cpuOnly(colors, buckets, in_image.size());
+        runtime = cpuOnly(colors, buckets, in_image.size());
     } else {
-        runOnGpu(colors, buckets, in_image.size(), height, width, impl);
+        runtime = runOnGpu(colors, buckets, in_image.size(), height, width, impl);
     } 
     
     for(int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
     }
-    printf("%lu:%u\n", in_image.size(), width*height);  
+    printf("Runtime %lf\n", runtime);  
     free(buckets);
 }

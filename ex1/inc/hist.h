@@ -5,7 +5,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-void runOnGpu(const unsigned char* colors, unsigned int* buckets, 
+double runOnGpu(const unsigned char* colors, unsigned int* buckets, 
                 unsigned int len, unsigned int rows, unsigned int cols, 
                 unsigned char compute_function);
 

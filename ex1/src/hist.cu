@@ -71,7 +71,7 @@ __global__ void gpuGood_MergeBlocks(unsigned int* buckets, unsigned int blockcnt
     }
 }
 
-void runOnGpu(const unsigned char* colors, unsigned int* buckets, 
+double runOnGpu(const unsigned char* colors, unsigned int* buckets, 
                 unsigned int len, unsigned int rows, unsigned int cols, 
                 unsigned char compute_function
     ) {
@@ -79,6 +79,9 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     {
         return;
     }
+
+    struct timeval start, end;
+    gettimeofday(&start,NULL);
 
     unsigned char* d_colors;
     unsigned int* d_buckets;
@@ -95,7 +98,10 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     {
         CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
         printf("Using naive GPU implementation\n");
+        gettimeofday(&start,NULL);
         gpuNaive<<<grid, block>>>(d_colors, d_buckets, len, rows, cols );
+        gettimeofday(&end,NULL);
+    
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
         CHECK(cudaFree(d_buckets));
     }
@@ -104,7 +110,8 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
 
         CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4 * grid.x ));
         printf("Using good GPU implementation\n");
-        
+        gettimeofday(&start,NULL);
+    
         gpuGood_Block<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
         unsigned int blockCnt = grid.x;
         block.x = 256;
@@ -113,10 +120,17 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
         grid.y = 1;
         
         gpuGood_MergeBlocks<<<grid, block>>>(d_buckets, blockCnt);
+        gettimeofday(&end,NULL);
+
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
         CHECK(cudaFree(d_buckets));
     }
     CHECK(cudaFree(d_colors));
+
+    double start_seconds = ((double)start.tv_sec + (double)start.tv_usec*1.e-6)
+    double end_seconds = ((double)end.tv_sec + (double)end.tv_usec*1.e-6)
+    return end_seconds - start_seconds;
+
 }
 
 
