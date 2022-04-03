@@ -21,17 +21,20 @@
 __global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
-    unsigned int i = (iy * rows + ix)*4;
+    unsigned int i = (iy * blockDim.x * gridDim.x + ix);
+   
     if (i < len) {
-        // get wether rgb or alpha value 
-        unsigned int entry =  colors[i];
-        atomicAdd(&buckets[entry], 1);
-        entry = 256   + colors[i+1];
-        atomicAdd(&buckets[entry], 1);
-        entry = 256*2 + colors[i+2];
-        atomicAdd(&buckets[entry], 1);
-        entry = 256*3 + colors[i+3];
-        atomicAdd(&buckets[entry], 1);
+        unsigned int entry = (i%4)*256 + colors[i];
+		atomicAdd(&buckets[entry], 1);
+	// get wether rgb or alpha value 
+        //unsigned int entry =  colors[i];
+        //atomicAdd(&buckets[entry], 1);
+        //entry = 256   + colors[i+1];
+        //atomicAdd(&buckets[entry], 1);
+        //entry = 256*2 + colors[i+2];
+        //atomicAdd(&buckets[entry], 1);
+        //entry = 256*3 + colors[i+3];
+        //atomicAdd(&buckets[entry], 1);
     }
 }
 
@@ -102,7 +105,7 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     {
         dim3 grid, block;
         block.x = 256;
-        block.y = 1;
+        block.y = 4;
         grid.x = ceil((double)(rows*cols)/ block.x); 
         grid.y = 1;
         

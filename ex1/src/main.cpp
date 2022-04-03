@@ -14,6 +14,7 @@
 #include <sys/time.h>
 
 double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int len) {
+    printf("Using CPU implementation\n");
     struct timeval start, end;
     gettimeofday(&start,NULL);
     
@@ -64,12 +65,12 @@ int main(int argc, char** argv) {
     double runtime =0;
     for(unsigned int i =0; i < repetitions; i++)
     {
+        memset(buckets, 0, 256*4 *sizeof(unsigned int));
         if (impl == 0) {
             runtime += cpuOnly(colors, buckets, in_image.size());
         } else {
             runtime += runOnGpu(colors, buckets, in_image.size(), height, width, impl);
         } 
-        memset(buckets, 0, 256*4 *sizeof(unsigned int));
     }
     for(int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
