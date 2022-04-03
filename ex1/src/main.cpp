@@ -14,7 +14,6 @@
 #include <sys/time.h>
 
 double cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int len) {
-    printf("Using CPU implementation\n");
     struct timeval start, end;
     gettimeofday(&start,NULL);
     

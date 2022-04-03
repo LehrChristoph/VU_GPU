@@ -107,7 +107,6 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
         grid.y = 1;
         
 	    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
-        printf("Using naive GPU implementation\n");
         gettimeofday(&start,NULL);
         gpuNaive<<<grid, block>>>(d_colors, d_buckets, len, rows, cols );
         gettimeofday(&end,NULL);
@@ -125,7 +124,6 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
         grid.y = 1;
         
 	    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4 * grid.x ));
-        printf("Using good GPU implementation\n");
         gettimeofday(&start,NULL);
     
         gpuGood_Block<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
