@@ -18,7 +18,7 @@ void cpuOnly(const unsigned char* colors, unsigned int* buckets, unsigned int le
         // get wether rgb or alpha value 
         unsigned int color = i % 4;
         unsigned int entry = 256*color + colors[i];
-        buckets[entry]++;
+	buckets[entry]++;
     }
 }
 
@@ -62,6 +62,6 @@ int main(int argc, char** argv) {
     for(int i = 0; i < 256; i++) {
         printf("%4u | %6d | %6d | %6d | %6d \n", i, buckets[i], buckets[i+256], buckets[i+(256*2)], buckets[i+(256*3)] );
     }
-    
+    printf("%lu:%u\n", in_image.size(), width*height);  
     free(buckets);
 }
