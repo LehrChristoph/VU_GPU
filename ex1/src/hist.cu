@@ -65,8 +65,8 @@ __global__ void gpuGood_MergeBlocks(unsigned int* buckets, unsigned int blockcnt
         //offset *= 4*256;
         for(unsigned int j=1; j < blockcnt; j++)
         {
-            unsigned int entry = i+blockcnt *4*256
-            atomicAdd(&buckets[i], 1);
+            unsigned int entry = i+ j *4*256;
+            atomicAdd(&buckets[i], buckets[entry]);
         }
     }
 }
@@ -86,7 +86,7 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     CHECK(cudaMemcpy(d_colors, colors, sizeof(unsigned char) * len, cudaMemcpyHostToDevice));
         
     dim3 grid, block;
-    block.x = 32;
+    block.x = 128;
     block.y = 1;
     grid.x = ceil((double)(rows*cols)/ block.x); 
     grid.y = 1;
@@ -111,7 +111,7 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
         block.y = 1;
         grid.x = 4; 
         grid.y = 1;
-        
+       	//cudaDeviceSynchronize(); 
         gpuGood_MergeBlocks<<<grid, block>>>(d_buckets, blockCnt);
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
         CHECK(cudaFree(d_buckets));
