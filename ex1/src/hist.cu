@@ -20,31 +20,54 @@
 __global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
-    unsigned int i = (iy * gridDim.x + ix)*4;
+    unsigned int i = (iy * rows + ix)*4;
     if (i < len) {
         // get wether rgb or alpha value 
-        unsigned int color = i % 4;
         unsigned int entry =  colors[i];
-	atomicAdd(&buckets[entry], 1);
-	entry = 256   + colors[i+1];
-	atomicAdd(&buckets[entry], 1);
-	entry = 256*2 + colors[i+2];
-	atomicAdd(&buckets[entry], 1);
-	entry = 256*3 + colors[i+3];
-	atomicAdd(&buckets[entry], 1);
-	
+        atomicAdd(&buckets[entry], 1);
+        entry = 256   + colors[i+1];
+        atomicAdd(&buckets[entry], 1);
+        entry = 256*2 + colors[i+2];
+        atomicAdd(&buckets[entry], 1);
+        entry = 256*3 + colors[i+3];
+        atomicAdd(&buckets[entry], 1);
     }
-
 }
 
-__global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
-    // TODO
-    int i = threadIdx.x + blockDim.x * threadIdx.y + blockDim.x * blockDim.y * blockIdx.x + blockDim.x * blockDim.y * blockIdx.y * gridDim.x;
+__global__ void gpuGood_Block(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
+    unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
+    unsigned int i = (iy * rows+ ix)*4;
+
     if (i < len) {
+        unsigned int offset = blockIdx.y * gridDim.x + blockIdx.x;
+        offset *= 4*256;
         // get wether rgb or alpha value 
-        unsigned int color = i % 4;
-        unsigned int entry = 256*color + colors[i];
-	    atomicAdd(&buckets[entry], 1);
+        unsigned int entry = offset+ colors[i];
+        atomicAdd(&buckets[entry], 1);
+        entry = offset + 256   + colors[i+1];
+        atomicAdd(&buckets[entry], 1);
+        entry = offset + 256*2 + colors[i+2];
+        atomicAdd(&buckets[entry], 1);
+        entry = offset + 256*3 + colors[i+3];
+        atomicAdd(&buckets[entry], 1);
+    }
+}
+
+__global__ void gpuGood_MergeBlocks(unsigned int* buckets, unsigned int blockcnt) {
+    unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
+    unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
+    unsigned int i = iy * 4 * 256 + ix;
+
+    if (i < 4*256) {
+
+        //unsigned int offset = blockIdx.y * gridDim.x + blockIdx.x;
+        //offset *= 4*256;
+        for(unsigned int j=1; j < blockcnt; j++)
+        {
+            unsigned int entry = i+blockcnt *4*256
+            atomicAdd(&buckets[i], 1);
+        }
     }
 }
 
@@ -60,31 +83,40 @@ void runOnGpu(const unsigned char* colors, unsigned int* buckets,
     unsigned char* d_colors;
     unsigned int* d_buckets;
     CHECK(cudaMalloc(&d_colors, sizeof(unsigned char) * len));
-    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
     CHECK(cudaMemcpy(d_colors, colors, sizeof(unsigned char) * len, cudaMemcpyHostToDevice));
+        
     dim3 grid, block;
     block.x = 32;
     block.y = 1;
-    grid.x = ceil((double)(rows*cols)/ block.x);   //(cols*4)  / block.x + 1;
-    grid.y = 1;// rows  / block.y + 1;
+    grid.x = ceil((double)(rows*cols)/ block.x); 
+    grid.y = 1;
     
-    //grid.x = ceil((double)(cols)/ block.x);   
-    //grid.y = ceil((double)(rows*4)  / block.y);
-    
-    /* printf("%d - %d\n", grid.x, grid.y); */
     if(compute_function == 1)
     {
+        CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
         printf("Using naive GPU implementation\n");
         gpuNaive<<<grid, block>>>(d_colors, d_buckets, len, rows, cols );
+        CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
+        CHECK(cudaFree(d_buckets));
     }
     else
     {
+
+        CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4 * grid.x ));
         printf("Using good GPU implementation\n");
-        gpuGood<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
+        
+        gpuGood_Block<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
+        unsigned int blockCnt = grid.x;
+        block.x = 256;
+        block.y = 1;
+        grid.x = 4; 
+        grid.y = 1;
+        
+        gpuGood_MergeBlocks<<<grid, block>>>(d_buckets, blockCnt);
+        CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
+        CHECK(cudaFree(d_buckets));
     }
-    CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
     CHECK(cudaFree(d_colors));
-    CHECK(cudaFree(d_buckets));
 }
 
 
