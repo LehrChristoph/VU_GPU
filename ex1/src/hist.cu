@@ -35,6 +35,7 @@ __global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned i
     unsigned int i = (iy * blockDim.x * gridDim.x + ix);
 
     __shared__ unsigned int local_bucktes [4*256];
+    // check whether the dimension of the block exceeds the size of the block
     if(blockDim.x * blockDim.y >= 4*256)
     {
         // use first 4*256 threads to init shared array
@@ -109,10 +110,11 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
         grid.x = ceil((double)(rows*cols)/ block.x); 
         grid.y = 1;
         
-	    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
+	CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
         gettimeofday(&start,NULL);
         gpuNaive<<<grid, block>>>(d_colors, d_buckets, len);
-        gettimeofday(&end,NULL);
+        cudaDeviceSynchronize();
+	gettimeofday(&end,NULL);
     
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
         CHECK(cudaFree(d_buckets));
@@ -121,8 +123,7 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     {
 
         dim3 grid, block;
-        //block.x = 256;
-        block.x = 128;
+        block.x = 256;
         block.y = 4;
         grid.x = ceil((double)(rows*cols)/ block.x ); 
         grid.y = 1;
@@ -131,7 +132,8 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
         gettimeofday(&start,NULL);
     
         gpuGood<<<grid, block>>>(d_colors, d_buckets, len);
-        gettimeofday(&end,NULL);
+        cudaDeviceSynchronize();
+	gettimeofday(&end,NULL);
 
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
         CHECK(cudaFree(d_buckets));
