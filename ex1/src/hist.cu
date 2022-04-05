@@ -18,7 +18,7 @@
             }                                                           \
     }
     
-__global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
+__global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned int len) {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
     unsigned int i = (iy * blockDim.x * gridDim.x + ix);
@@ -26,61 +26,61 @@ __global__ void gpuNaive(unsigned char* colors, unsigned int* buckets, unsigned 
     if (i < len) {
         unsigned int entry = (i%4)*256 + colors[i];
 		atomicAdd(&buckets[entry], 1);
-	// get wether rgb or alpha value 
-        //unsigned int entry =  colors[i];
-        //atomicAdd(&buckets[entry], 1);
-        //entry = 256   + colors[i+1];
-        //atomicAdd(&buckets[entry], 1);
-        //entry = 256*2 + colors[i+2];
-        //atomicAdd(&buckets[entry], 1);
-        //entry = 256*3 + colors[i+3];
-        //atomicAdd(&buckets[entry], 1);
     }
 }
 
-__global__ void gpuGood_Block(unsigned char* colors, unsigned int* buckets, unsigned int len, unsigned int rows, unsigned int cols) {
+__global__ void gpuGood(unsigned char* colors, unsigned int* buckets, unsigned int len) {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
-    unsigned int i = (iy * rows  + ix)*4;
+    unsigned int i = (iy * blockDim.x * gridDim.x + ix);
 
-    if (i < len) {
-        //unsigned int entry = (i%4)*256 + colors[i];
-	//    atomicAdd(&buckets[entry], 1);
-        
-        unsigned int offset = blockIdx.y * gridDim.x + blockIdx.x;
-        offset *= 4*256;
-        // get wether rgb or alpha value 
-        unsigned int entry = offset+ colors[i];
-        atomicAdd(&buckets[entry], 1);
-        entry = offset + 256   + colors[i+1];
-        atomicAdd(&buckets[entry], 1);
-        entry = offset + 256*2 + colors[i+2];
-        atomicAdd(&buckets[entry], 1);
-        entry = offset + 256*3 + colors[i+3];
-        atomicAdd(&buckets[entry], 1);
-    }
-}
-
-__global__ void gpuGood_MergeBlocks(unsigned int* buckets, unsigned int blockcnt) {
-    unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
-    unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
-    //unsigned int i = iy * 256 + ix;
-    unsigned int i = (iy * blockDim.x * gridDim.x + ix); 
-    
-    
-    if (i < 4*256) {
-
-        //unsigned int offset = blockIdx.y * gridDim.x + blockIdx.x;
-        //offset *= 4*256;
-        for(unsigned int j=1; j < blockcnt; j++)
+    __shared__ unsigned int local_bucktes [4*256];
+    if(blockDim.x * blockDim.y >= 4*256)
+    {
+        // use first 4*256 threads to init shared array
+	unsigned int j = blockDim.x* threadIdx.y + threadIdx.x;
+        if(j < 4*256)
         {
-            unsigned int entry = i+ j *4*256;
-            //atomicAdd(&buckets[i], buckets[entry]);
-	    buckets[i] += buckets[entry];
+            local_bucktes[j] = 0;
         }
     }
+    else
+    {
+	// each thread has to init more than 1 bucket
+        for(unsigned int j = blockDim.x* threadIdx.y + threadIdx.x; j < 4*256; j += blockDim.x * blockDim.y)
+        {
+            local_bucktes[j] = 0;
+        }
+    }
+
+    __syncthreads();
     
-    //atomicAdd(&buckets[i%(256*4)], buckets[i+(256*4)]);
+    // add value to bucket
+    if (i < len) {
+        unsigned int entry = (i%4)*256 + colors[i];
+	atomicAdd(&local_bucktes[entry], 1);
+    }
+    
+    __syncthreads();
+
+    if(blockDim.x * blockDim.y >= 4*256)
+    {
+	// use first 4*256 buckets to add up buckets
+        unsigned int j = blockDim.x* threadIdx.y + threadIdx.x;
+        if(j < 4*256)
+        {
+            atomicAdd(&buckets[j], local_bucktes[j]);
+        }
+    }
+    else
+    {
+	// each thread has to add more then one bucket
+	for(unsigned int j = blockDim.x* threadIdx.y + threadIdx.x; j < 4*256; j += blockDim.x * blockDim.y)
+        {
+            atomicAdd(&buckets[j], local_bucktes[j]);
+        }
+    }
+
 }
 
 double runOnGpu(const unsigned char* colors, unsigned int* buckets, 
@@ -111,7 +111,7 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
         
 	    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4));
         gettimeofday(&start,NULL);
-        gpuNaive<<<grid, block>>>(d_colors, d_buckets, len, rows, cols );
+        gpuNaive<<<grid, block>>>(d_colors, d_buckets, len);
         gettimeofday(&end,NULL);
     
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
@@ -121,19 +121,16 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     {
 
         dim3 grid, block;
-        block.x = 256;
-        block.y = 1;
+        //block.x = 256;
+        block.x = 128;
+        block.y = 4;
         grid.x = ceil((double)(rows*cols)/ block.x ); 
         grid.y = 1;
         
-	    CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4 * grid.x ));
+	CHECK(cudaMalloc(&d_buckets, sizeof(unsigned int) * 256*4 ));
         gettimeofday(&start,NULL);
     
-        gpuGood_Block<<<grid, block>>>(d_colors, d_buckets, len, rows, cols);
-        unsigned int blockCnt = grid.x;
-        // shrink grid by one as the frist 4*256 are not reused
-        grid.x = 4; 
-        gpuGood_MergeBlocks<<<grid, block>>>(d_buckets, blockCnt);
+        gpuGood<<<grid, block>>>(d_colors, d_buckets, len);
         gettimeofday(&end,NULL);
 
         CHECK(cudaMemcpy(buckets, d_buckets, sizeof(unsigned int) *256*4, cudaMemcpyDeviceToHost));
@@ -146,5 +143,4 @@ double runOnGpu(const unsigned char* colors, unsigned int* buckets,
     return end_seconds - start_seconds;
 
 }
-
 
