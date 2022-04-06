@@ -13,8 +13,8 @@ incs 		 = $(wildcard $(inc_dir)/*.h)
 local_objects_tmp	= $(srcs:$(src_dir)%.cu=$(obj_dir)%.o)
 local_objects		= $(local_objects_tmp:$(src_dir)%.cpp=$(obj_dir)%.o)
 
-CXX 	= nvcc
-NVCXX 	= nvcc
+CXX 	= /usr/local/cuda-11.6/bin/nvcc
+NVCXX 	= /usr/local/cuda-11.6/bin/nvcc
 
 NVCXXFLAGS	= 
 CXXFLAGS	= -ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11 " -Lcuda -Lcudart
@@ -25,10 +25,10 @@ all: $(obj_dir) hist
 $(obj_dir)/%.o: $(src_dir)/%.cpp
 	$(CXX) -I $(inc_dir) $(CXXFLGAS) -c $< -o $@
 $(obj_dir)/%.o: $(src_dir)/%.cu
-	$(NVCXX) $(NVCXXFLAGS) -c $< -o $@ 	
+	$(NVCXX) $(NVCXXFLAGS) -c $< -o $@
 
 hist : $(local_objects)
-	$(CXX) $(CXXFLAGS) $(local_objects) -o $(FILENAME) 
+	$(CXX) $(CXXFLAGS) $(local_objects) -o $(FILENAME)
 
 $(obj_dir):
 	mkdir -p $(obj_dir)
