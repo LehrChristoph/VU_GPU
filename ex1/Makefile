@@ -13,8 +13,8 @@ incs 		 = $(wildcard $(inc_dir)/*.h)
 local_objects_tmp	= $(srcs:$(src_dir)%.cu=$(obj_dir)%.o)
 local_objects		= $(local_objects_tmp:$(src_dir)%.cpp=$(obj_dir)%.o)
 
-CXX 	= /usr/local/cuda-11.6/bin/nvcc
-NVCXX 	= /usr/local/cuda-11.6/bin/nvcc
+CXX 	= nvcc
+NVCXX 	= nvcc
 
 NVCXXFLAGS	= 
 CXXFLAGS	= -ccbin g++ -Xcompiler "-W -Wall -Wextra -ansi -pedantic -O3 -std=c++11 " -Lcuda -Lcudart
