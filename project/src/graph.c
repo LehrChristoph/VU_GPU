@@ -1,8 +1,10 @@
-#include "graph.h"
-#include "io.h"
 #include <stdlib.h>
 
+#include "graph.h"
+#include "io.h"
+
 dense_graph *to_dense(graph *graph) {
+    if (!graph) return NULL;
     dense_graph *out = malloc(sizeof(dense_graph));
     out->nodes = malloc(sizeof(dense_node) * graph->num_nodes);
     out->nodes->edges = malloc(sizeof(dense_edge) * graph->num_edges);
@@ -25,6 +27,7 @@ dense_graph *to_dense(graph *graph) {
 }
 
 graph *from_dense(dense_graph *dgraph) {
+    if (!dgraph) return NULL;
     graph *out = malloc(sizeof(graph));
     out->num_nodes = dgraph->num_nodes;
     out->num_edges = dgraph->num_edges;

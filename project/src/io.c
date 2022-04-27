@@ -1,11 +1,12 @@
-#include "io.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "io.h"
+
 #define FILE_ERR(...) {                         \
         printf(__VA_ARGS__);                    \
-        out->num_nodes = 0;                      \
+        out->num_nodes = 0;                     \
         fclose(fp);                             \
         free_graph(out);                        \
         return NULL;                            \
