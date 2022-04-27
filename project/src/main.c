@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         }
         graph *graph = read_graph(argv[2]);
         if (graph) {
-            write_graph(graph, stdout);
+            write_graph(from_dense(to_dense(graph)), stdout);
         }
         free_graph(graph);
     } else {
