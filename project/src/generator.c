@@ -5,7 +5,7 @@
 
 dense_graph *generate(int num_nodes, float density, int min_weight, int max_weight) {
     if (num_nodes <= 0 || density < 0 || density > 1) {
-        printf("Invalid input\n");
+        printf("Invalid input: num_nodes (%d) or density (%f) \n", num_nodes, density);
         return NULL;
     }
     dense_graph *graph = malloc(sizeof(dense_graph));
@@ -17,18 +17,23 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
         int from = random() % num_nodes;
         graph->nodes[from].num_edges++;
     }
+    size_t size_blocked = sizeof(bool) * num_nodes;
+    bool *blocked = malloc(size_blocked);
+
     dense_edge* edge_ptr = graph->nodes->edges;
     for (int i = 0; i < num_nodes; i++) {
         graph->nodes[i].edges = edge_ptr;
-        int blocked = 1 << i;
+        memset(blocked, 0, size_blocked);
+        blocked[i] = true;
+
         for (int j = 0; j < graph->nodes[i].num_edges; j++) {
             int to = random() % num_nodes;
-            while (blocked & (1 << to)) {
+            while (blocked[to]) {
                 if (++to == num_nodes) {
                     to = 0;
                 }
             }
-            blocked |= 1 << to;
+            blocked[to] = true;
             *(edge_ptr++) = to;
         }
     }

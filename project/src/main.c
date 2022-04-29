@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <float.h>
 
 #include "io.h"
 #include "generator.h"
@@ -9,35 +10,108 @@
 int main(int argc, char** argv) {
     srandom(time(NULL));
     if (argc == 1) {
-        printf("Usage: ...\n");
+        printf("Usage: [generate|bench|calculate] ...\n");
         return 1;
     }
     if (strcmp(argv[1], "generate") == 0) {
         if (argc != 6 && argc != 7) {
             printf("Usage: %s generate [filename] <#nodes> <density (0-1)> <min_weight> <max_weight>\n", argv[0]);
+            return 1;
         }
+
         int num_nodes = atoi(argv[argc-4]);
         float density = atof(argv[argc-3]);
         int min_weight = atoi(argv[argc-2]);
         int max_weight = atoi(argv[argc-1]);
         FILE* fp = argc == 6 ? stdout : fopen(argv[2], "w");
-        graph* graph = from_dense(generate(num_nodes, density, min_weight, max_weight));
+        dense_graph *dense_graph = generate(num_nodes, density, min_weight, max_weight);
+        graph* graph = from_dense(dense_graph);
         if (graph) {
             write_graph(graph, fp);
-            free_graph(graph);
         }
+        free_graph(graph);
+        free_dense(dense_graph);
         fclose(fp);
+
     } else if (strcmp(argv[1], "calculate") == 0) {
         if (argc != 3) {
             printf("Usage: %s calculate <filename>\n", argv[0]);
             return 1;
         }
+
         graph *graph = read_graph(argv[2]);
-        if (graph) {
-            write_graph(from_dense(to_dense(graph)), stdout);
+        if (!graph) {
+            return 1;
         }
+
+        dense_graph *dense_graph = to_dense(graph);
+
+        connected_components *connected_components = calculate_connected_components(dense_graph);
+        write_connected_components(connected_components, stdout);
+
+        free_connected_components(connected_components);
+        free_dense(dense_graph);
         free_graph(graph);
+
+    } else if (strcmp(argv[1], "bench") == 0) {
+        if (argc != 5) {
+            printf("Usage: %s bench <rounds> <#nodes> <do-checking (0/1)>\n", argv[0]);
+            return 1;
+        }
+
+        int rounds = atoi(argv[2]);
+        int num_nodes = atoi(argv[3]);
+        int do_checking = atoi(argv[4]);
+
+        int n_functions = 1;
+        double mins[] = {DBL_MAX};
+        double maxs[] = {0};
+        double sums[] = {0};
+
+        typedef connected_components* (*connected_components_function)(dense_graph*);
+        char* function_names[] = {"CPU"};
+        connected_components_function functions[] = {calculate_connected_components};
+
+        clock_t start, end;
+        for (int round = 0; round < rounds; round++) {
+            dense_graph *dense_graph = generate(num_nodes, (float)round/(float)rounds, 1, 1);
+            connected_components *true_components = calculate_connected_components(dense_graph);
+
+            for (int i = 0; i < n_functions; i++) {
+                start = clock();
+                connected_components *calculated = functions[i](dense_graph);
+                end = clock();
+
+                if (do_checking) {
+                    int compare_result = compare_connected_components(true_components, calculated);
+                    if (compare_result != 1) {
+                        printf("Function %s failed for graph:\n", function_names[i]);
+                        graph *out_graph = from_dense(dense_graph);
+                        write_graph(out_graph, stdout);
+                        free_graph(out_graph);
+                        printf("\n\nWith result:\n");
+                        write_connected_components(calculated, stdout);
+                        printf("\n\nShould have been:\n");
+                        write_connected_components(true_components, stdout);
+                        return compare_result;
+                    }
+                }
+
+                double duration = (double) (end - start) / (double) CLOCKS_PER_SEC;
+                //printf("Graph with %d nodes and %d edges took %f seconds for %s\n", dense_graph->num_nodes, dense_graph->num_edges, duration, function_names[i]);
+                if (mins[i] > duration) mins[i] = duration;
+                if (maxs[i] < duration) maxs[i] = duration;
+                sums[i] += duration;
+            }
+
+            free_dense(dense_graph);
+        }
+
+        for (int i = 0; i < n_functions; i++) {
+            printf("Function %s took min %f, avg %f, max %f (total %f)", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i]);
+        }
+
     } else {
-        printf("Unknown command %s, available: generate, calculate\n", argv[0]);
+        printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
     }
 }
