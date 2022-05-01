@@ -10,6 +10,10 @@
 
 #define arr(type, name, size, init) type name[] = init; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
 
+#define n_functions 1
+
+arr(connected_components_function, functions, n_functions, {calculate_connected_components});
+
 int main(int argc, char** argv) {
     srandom(time(NULL));
     if (argc == 1) {
@@ -37,25 +41,41 @@ int main(int argc, char** argv) {
         fclose(fp);
 
     } else if (strcmp(argv[1], "calculate") == 0) {
-        if (argc != 3) {
-            printf("Usage: %s calculate <filename>\n", argv[0]);
+        if (argc != 4 && (argc != 6 || strcmp(argv[3], "--generate"))) {
+            printf("Usage: %s calculate <impl (0-0)> <filename|--generate <#nodes> <density (0-1)>>\n", argv[0]);
             return 1;
         }
 
-        graph *graph = read_graph(argv[2]);
-        if (!graph) {
+        int impl = atoi(argv[2]);
+        if (impl < 0 || impl >= n_functions) {
+            printf("Invalid implementation %d\n", impl);
             return 1;
         }
 
-        dense_graph *dense_graph = to_dense(graph);
+        graph *graph;
+        dense_graph *dense_graph;
+        if (argc == 4) {
+            if (!strcmp(argv[3], "--generate")) {
+                printf("Usage: %s calculate <impl (0-%d)> <filename|--generate <#nodes> <density (0-1)>>\n", argv[0], n_functions-1);
+                return 1;
+            }
+            graph = read_graph(argv[3]);
+            dense_graph = to_dense(graph);
+        } else {
+            int num_nodes = atoi(argv[argc-2]);
+            float density = atof(argv[argc-1]);
+            dense_graph = generate(num_nodes, density, 1, 10);
+        }
+        if (!dense_graph) {
+            return 1;
+        }
 
-        connected_components *connected_components = calculate_connected_components(dense_graph);
+        connected_components *connected_components = functions[impl](dense_graph);
         write_connected_components(connected_components, stdout);
 
         free_connected_components(connected_components);
         free_dense(dense_graph);
         free_graph(graph);
-
     } else if (strcmp(argv[1], "bench") == 0) {
         if (argc != 5) {
             printf("Usage: %s bench <rounds> <#nodes> <do-checking (0/1)>\n", argv[0]);
@@ -66,13 +86,11 @@ int main(int argc, char** argv) {
         int num_nodes = atoi(argv[3]);
         int do_checking = atoi(argv[4]);
 
-        #define n_functions 1
         arr(double, mins, n_functions, {DBL_MAX});
         arr(double, maxs, n_functions, {0});
         arr(double, sums, n_functions, {0});
 
         arr(char*, function_names, n_functions, {"CPU"});
-        arr(connected_components_function, functions, n_functions, {calculate_connected_components});
 
         clock_t start, end;
         for (int round = 0; round < rounds; round++) {
