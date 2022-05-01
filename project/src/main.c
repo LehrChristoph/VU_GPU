@@ -8,6 +8,8 @@
 #include "generator.h"
 #include "impl.h"
 
+#define arr(type, name, size, init) type name[] = init; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
+
 int main(int argc, char** argv) {
     srandom(time(NULL));
     if (argc == 1) {
@@ -64,14 +66,13 @@ int main(int argc, char** argv) {
         int num_nodes = atoi(argv[3]);
         int do_checking = atoi(argv[4]);
 
-        int n_functions = 1;
-        double mins[] = {DBL_MAX};
-        double maxs[] = {0};
-        double sums[] = {0};
+        #define n_functions 1
+        arr(double, mins, n_functions, {DBL_MAX});
+        arr(double, maxs, n_functions, {0});
+        arr(double, sums, n_functions, {0});
 
-        typedef connected_components* (*connected_components_function)(dense_graph*);
-        char* function_names[] = {"CPU"};
-        connected_components_function functions[] = {calculate_connected_components};
+        arr(char*, function_names, n_functions, {"CPU"});
+        arr(connected_components_function, functions, n_functions, {calculate_connected_components});
 
         clock_t start, end;
         for (int round = 0; round < rounds; round++) {
