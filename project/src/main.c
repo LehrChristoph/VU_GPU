@@ -8,7 +8,7 @@
 #include "generator.h"
 #include "impl.h"
 
-#define arr(type, name, size, init) type name[] = init; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
+#define arr(type, name, size, ...) type name[] = __VA_ARGS__; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
 
 #define n_functions 1
 
