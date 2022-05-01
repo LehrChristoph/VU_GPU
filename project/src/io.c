@@ -68,7 +68,7 @@ void free_graph(graph *graph) {
 
 void write_connected_components(connected_components *connected_components, FILE* file) {
     for (int i = 0; i < connected_components->num_components; i++) {
-        fprintf(file, "E%d", i);
+        fprintf(file, "C%d", i);
 
         component component = connected_components->components[i];
         for (int j = 0; j < component.num_nodes; j++) {

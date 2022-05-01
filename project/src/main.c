@@ -6,6 +6,7 @@
 
 #include "io.h"
 #include "generator.h"
+#include "impl.h"
 
 int main(int argc, char** argv) {
     srandom(time(NULL));
@@ -108,7 +109,7 @@ int main(int argc, char** argv) {
         }
 
         for (int i = 0; i < n_functions; i++) {
-            printf("Function %s took min %f, avg %f, max %f (total %f)", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i]);
+            printf("Function %s took min %f, avg %f, max %f (total %f)\n", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i]);
         }
 
     } else {

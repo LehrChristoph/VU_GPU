@@ -1,5 +1,5 @@
 #pragma once
-#include "stdbool.h"
+#include <stdbool.h>
 
 typedef int node;
 
@@ -44,5 +44,4 @@ typedef struct {
 
 int compare_components(component first, component second);
 int compare_connected_components(connected_components *first, connected_components *second);
-connected_components *calculate_connected_components(dense_graph *graph);
 void free_connected_components(connected_components *connected_components);
