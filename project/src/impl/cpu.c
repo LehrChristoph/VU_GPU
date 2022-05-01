@@ -1,9 +1,11 @@
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "impl.h"
 
-connected_components *calculate_connected_components(dense_graph *graph) {
+clock_t calculate_connected_components(dense_graph *graph, connected_components** out) {
+    clock_t start = clock();
     bool *used_nodes = calloc(graph->num_nodes, sizeof(bool));
 
     int num_components = 0;
@@ -51,5 +53,6 @@ connected_components *calculate_connected_components(dense_graph *graph) {
 
     free(component_buffer);
 
-    return result;
+    *out = result;
+    return clock() - start;
 }

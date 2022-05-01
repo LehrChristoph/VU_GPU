@@ -2,7 +2,7 @@
 
 #include "graph.h"
 
-typedef connected_components* (*connected_components_function)(dense_graph*);
+typedef clock_t (*connected_components_function)(dense_graph*, connected_components**);
 
 // CPU version
-connected_components *calculate_connected_components(dense_graph *graph);
+clock_t calculate_connected_components(dense_graph *graph, connected_components** out);

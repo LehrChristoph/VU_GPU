@@ -70,7 +70,8 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        connected_components *connected_components = functions[impl](dense_graph);
+        connected_components *connected_components;
+        functions[impl](dense_graph, &connected_components);
         write_connected_components(connected_components, stdout);
 
         free_connected_components(connected_components);
@@ -92,15 +93,15 @@ int main(int argc, char** argv) {
 
         arr(char*, function_names, n_functions, {"CPU"});
 
-        clock_t start, end;
+        clock_t dur;
         for (int round = 0; round < rounds; round++) {
             dense_graph *dense_graph = generate(num_nodes, (float)round/(float)rounds, 1, 1);
-            connected_components *true_components = calculate_connected_components(dense_graph);
+            connected_components *true_components;
+            calculate_connected_components(dense_graph, &true_components);
 
             for (int i = 0; i < n_functions; i++) {
-                start = clock();
-                connected_components *calculated = functions[i](dense_graph);
-                end = clock();
+                connected_components *calculated;
+                dur = functions[i](dense_graph, &calculated);
 
                 if (do_checking) {
                     int compare_result = compare_connected_components(true_components, calculated);
@@ -117,7 +118,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                double duration = (double) (end - start) / (double) CLOCKS_PER_SEC;
+                double duration = (double) dur / (double) CLOCKS_PER_SEC;
                 //printf("Graph with %d nodes and %d edges took %f seconds for %s\n", dense_graph->num_nodes, dense_graph->num_edges, duration, function_names[i]);
                 if (mins[i] > duration) mins[i] = duration;
                 if (maxs[i] < duration) maxs[i] = duration;
@@ -128,7 +129,7 @@ int main(int argc, char** argv) {
         }
 
         for (int i = 0; i < n_functions; i++) {
-            printf("Function %s took min %f, avg %f, max %f (total %f)\n", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i]);
+            printf("Function %s took min %f, avg %f, max %f (total %f), speedup factor %f\n", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i], sums[0] / sums[i]);
         }
 
     } else {
