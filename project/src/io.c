@@ -67,6 +67,10 @@ void free_graph(graph *graph) {
 }
 
 void write_connected_components(connected_components *connected_components, FILE* file) {
+    if (!connected_components) {
+        printf("Empty result\n");
+        return;
+    }
     for (int i = 0; i < connected_components->num_components; i++) {
         fprintf(file, "C%d", i);
 

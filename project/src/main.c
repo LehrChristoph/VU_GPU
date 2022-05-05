@@ -10,9 +10,9 @@
 
 #define arr(type, name, size, ...) type name[] = __VA_ARGS__; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
 
-#define n_functions 1
+#define n_functions 2
 
-arr(connected_components_function, functions, n_functions, {calculate_connected_components});
+arr(connected_components_function, functions, n_functions, {calculate_connected_components, connected_components_thread_per_cc});
 
 int main(int argc, char** argv) {
     srandom(time(NULL));
@@ -87,11 +87,11 @@ int main(int argc, char** argv) {
         int num_nodes = atoi(argv[3]);
         int do_checking = atoi(argv[4]);
 
-        arr(double, mins, n_functions, {DBL_MAX});
-        arr(double, maxs, n_functions, {0});
-        arr(double, sums, n_functions, {0});
+        arr(double, mins, n_functions, {[0 ... n_functions-1] = DBL_MAX});
+        arr(double, maxs, n_functions, {[0 ... n_functions-1] = 0});
+        arr(double, sums, n_functions, {[0 ... n_functions-1] = 0});
 
-        arr(char*, function_names, n_functions, {"CPU"});
+        arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC"});
 
         clock_t dur;
         for (int round = 0; round < rounds; round++) {

@@ -6,9 +6,9 @@
 
 dense_graph *to_dense(graph *graph) {
     if (!graph) return NULL;
-    dense_graph *out = malloc(sizeof(dense_graph));
-    out->nodes = malloc(sizeof(dense_node) * graph->num_nodes);
-    out->nodes->edges = malloc(sizeof(dense_edge) * graph->num_edges * 2);
+    dense_graph *out = malloc(sizeof(dense_graph) + sizeof(dense_node) * graph->num_nodes + sizeof(dense_edge) * graph->num_edges * 2);
+    out->nodes = ((void*) out) + sizeof(dense_graph);
+    out->nodes->edges = ((void*) out) + sizeof(dense_graph) + sizeof(dense_node) * graph->num_nodes;
     out->num_nodes = graph->num_nodes;
     out->num_edges = graph->num_edges;
     dense_edge* edge_ptr = out->nodes->edges;
@@ -29,6 +29,7 @@ dense_graph *to_dense(graph *graph) {
 }
 
 graph *from_dense(dense_graph *dgraph) {
+    // TODO reverse edges
     if (!dgraph) return NULL;
     graph *out = malloc(sizeof(graph));
     out->num_nodes = dgraph->num_nodes;
@@ -48,13 +49,6 @@ graph *from_dense(dense_graph *dgraph) {
 
 void free_dense(dense_graph *graph) {
     if (!graph) return;
-
-    if (graph->nodes && graph->nodes->edges) {
-        free(graph->nodes->edges);
-    }
-    if (graph->nodes) {
-        free(graph->nodes);
-    }
     free(graph);
 }
 
@@ -112,6 +106,7 @@ int compare_components(component first, component second) {
 }
 
 void free_connected_components(connected_components *connected_components) {
+    if (!connected_components) return;
     for (int i = 0; i < connected_components->num_components; i++) {
         free(connected_components->components[i].nodes);
     }

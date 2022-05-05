@@ -9,11 +9,13 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
         printf("Invalid input: num_nodes (%d) or density (%f) \n", num_nodes, density);
         return NULL;
     }
-    dense_graph *graph = malloc(sizeof(dense_graph));
+    int num_edges = (int) (num_nodes * (num_nodes - 1) * density / 2);
+    dense_graph *graph = malloc(sizeof(dense_graph) + sizeof(dense_node) * num_nodes + sizeof(dense_edge) * num_edges * 2);
     graph->num_nodes = num_nodes;
-    graph->num_edges = (int) (num_nodes * (num_nodes - 1) * density / 2);
-    graph->nodes = calloc(num_nodes, sizeof(dense_node));
-    graph->nodes->edges = malloc(sizeof(dense_edge) * graph->num_edges);
+    graph->num_edges = num_edges;
+    graph->nodes = ((void*) graph) + sizeof(dense_graph);
+    memset(graph->nodes, 0, sizeof(dense_node) * num_nodes);
+    graph->nodes->edges = ((void*) graph) + sizeof(dense_graph) + sizeof(dense_node) * num_nodes;
     for (int i = 0; i < graph->num_edges; i++) {
         int from = random() % num_nodes;
         graph->nodes[from].num_edges++;
@@ -22,6 +24,7 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
     bool *blocked = malloc(size_blocked);
 
     dense_edge* edge_ptr = graph->nodes->edges;
+    // TODO make reverse edges
     for (int i = 0; i < num_nodes; i++) {
         graph->nodes[i].edges = edge_ptr;
         memset(blocked, 0, size_blocked);
@@ -38,5 +41,6 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
             *(edge_ptr++) = to;
         }
     }
+    free(blocked);
     return graph;
 }
