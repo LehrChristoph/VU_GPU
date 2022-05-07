@@ -17,14 +17,13 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
     memset(graph->nodes, 0, sizeof(dense_node) * num_nodes);
     graph->nodes->edges = ((void*) graph) + sizeof(dense_graph) + sizeof(dense_node) * num_nodes;
 
-    bool adjacency_matrix[num_nodes][num_nodes];
-    memset(adjacency_matrix, false, num_nodes * num_nodes * sizeof(bool));
+    bool *adjacency_matrix = calloc(num_nodes * num_nodes, sizeof(bool));
 
     for (int i = 0; i < num_edges; i++) {
         int from = random() % num_nodes;
         int orig_to = random() % num_nodes;
         int to = orig_to;
-        while (from == to || adjacency_matrix[from][to]) {
+        while (from == to || adjacency_matrix[from * num_nodes + to]) {
             to = (to + 1) % num_nodes;
             if (to == orig_to) {
                 i--;
@@ -32,8 +31,8 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
             }
         }
         if (from != to) {
-          adjacency_matrix[from][to] = true;
-          adjacency_matrix[to][from] = true;
+          adjacency_matrix[from * num_nodes + to] = true;
+          adjacency_matrix[to * num_nodes + from] = true;
         }
     }
 
@@ -43,11 +42,12 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
         graph->nodes[i].edges = edge_ptr;
 
         for (int j = 0; j < num_nodes; j++) {
-            if (adjacency_matrix[i][j]) {
+            if (adjacency_matrix[i * num_nodes + j]) {
                 graph->nodes[i].num_edges++;
                 *(edge_ptr++) = j;
             }
         }
     }
+    free(adjacency_matrix);
     return graph;
 }
