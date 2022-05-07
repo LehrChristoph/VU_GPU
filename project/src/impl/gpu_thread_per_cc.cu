@@ -12,7 +12,7 @@ extern "C" {
 __global__ void populateGraph(dense_graph *d_graph, void *current_base,
                               void *real_base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
-             threadIdx.y - 1;
+             threadIdx.y;
   if (node > d_graph->num_nodes)
     return;
   if (node == 0) {
