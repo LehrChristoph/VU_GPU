@@ -38,7 +38,7 @@ typedef struct {
 } component;
 
 typedef struct {
-    int num_components;
+    unsigned int num_components;
     component *components;
 } connected_components;
 
