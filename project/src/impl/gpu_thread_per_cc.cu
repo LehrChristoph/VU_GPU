@@ -9,6 +9,8 @@ extern "C" {
 }
 #include "cuda_helpers.h"
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 __global__ void populateGraph(dense_graph *d_graph, dense_node *d_nodes,
                               dense_edge *d_edges, void *current_base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
@@ -70,7 +72,7 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
   dense_edge *d_edges;
   CHECK(cudaMalloc((void **)&d_graph, sizeof(dense_graph)));
   CHECK(cudaMalloc((void **)&d_gnodes, sizeof(dense_node) * graph->num_nodes));
-  CHECK(cudaMalloc((void **)&d_edges, sizeof(dense_edge) * graph->num_edges * 2));
+  CHECK(cudaMalloc((void **)&d_edges, MAX(sizeof(dense_edge) * graph->num_edges * 2, 1)));
   CHECK(cudaMemcpy(d_graph, graph, sizeof(dense_graph), cudaMemcpyHostToDevice));
   CHECK(cudaMemcpy(d_gnodes, graph->nodes, sizeof(dense_node) * graph->num_nodes, cudaMemcpyHostToDevice));
   CHECK(cudaMemcpy(d_edges, graph->nodes->edges, sizeof(dense_edge) * graph->num_edges * 2, cudaMemcpyHostToDevice));
