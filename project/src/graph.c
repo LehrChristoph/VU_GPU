@@ -29,7 +29,6 @@ dense_graph *to_dense(graph *graph) {
 }
 
 graph *from_dense(dense_graph *dgraph) {
-    // TODO reverse edges
     if (!dgraph) return NULL;
     graph *out = malloc(sizeof(graph));
     out->num_nodes = dgraph->num_nodes;
@@ -38,6 +37,7 @@ graph *from_dense(dense_graph *dgraph) {
     edge* edge_ptr = out->edges;
     for (int i = 0; i < dgraph->num_nodes; i++) {
         for (int j = 0; j < dgraph->nodes[i].num_edges; j++) {
+            if (i > dgraph->nodes[i].edges[j]) continue;
             edge_ptr->from = i;
             edge_ptr->to = dgraph->nodes[i].edges[j];
             edge_ptr->weight = 1; // we don't care about this

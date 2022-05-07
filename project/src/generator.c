@@ -16,31 +16,38 @@ dense_graph *generate(int num_nodes, float density, int min_weight, int max_weig
     graph->nodes = ((void*) graph) + sizeof(dense_graph);
     memset(graph->nodes, 0, sizeof(dense_node) * num_nodes);
     graph->nodes->edges = ((void*) graph) + sizeof(dense_graph) + sizeof(dense_node) * num_nodes;
-    for (int i = 0; i < graph->num_edges; i++) {
+
+    bool adjacency_matrix[num_nodes][num_nodes];
+    memset(adjacency_matrix, false, num_nodes * num_nodes * sizeof(bool));
+
+    for (int i = 0; i < num_edges; i++) {
         int from = random() % num_nodes;
-        graph->nodes[from].num_edges++;
-    }
-    size_t size_blocked = sizeof(bool) * num_nodes;
-    bool *blocked = malloc(size_blocked);
-
-    dense_edge* edge_ptr = graph->nodes->edges;
-    // TODO make reverse edges
-    for (int i = 0; i < num_nodes; i++) {
-        graph->nodes[i].edges = edge_ptr;
-        memset(blocked, 0, size_blocked);
-        blocked[i] = true;
-
-        for (int j = 0; j < graph->nodes[i].num_edges; j++) {
-            int to = random() % num_nodes;
-            while (blocked[to]) {
-                if (++to == num_nodes) {
-                    to = 0;
-                }
+        int orig_to = random() % num_nodes;
+        int to = orig_to;
+        while (from == to || adjacency_matrix[from][to]) {
+            to = (to + 1) % num_nodes;
+            if (to == orig_to) {
+                i--;
+                break;
             }
-            blocked[to] = true;
-            *(edge_ptr++) = to;
+        }
+        if (from != to) {
+          adjacency_matrix[from][to] = true;
+          adjacency_matrix[to][from] = true;
         }
     }
-    free(blocked);
+
+    dense_edge* edge_ptr = graph->nodes->edges;
+    int k = 0;
+    for (int i = 0; i < num_nodes; i++) {
+        graph->nodes[i].edges = edge_ptr;
+
+        for (int j = 0; j < num_nodes; j++) {
+            if (adjacency_matrix[i][j]) {
+                graph->nodes[i].num_edges++;
+                *(edge_ptr++) = j;
+            }
+        }
+    }
     return graph;
 }
