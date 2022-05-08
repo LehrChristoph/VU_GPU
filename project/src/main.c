@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
 
         clock_t dur;
         for (int round = 0; round < rounds; round++) {
+            printf("%d nodes, %f density\n", num_nodes, (float)round/(float)rounds);
             dense_graph *dense_graph = generate(num_nodes, (float)round/(float)rounds, 1, 1);
             connected_components *true_components;
             calculate_connected_components(dense_graph, &true_components);

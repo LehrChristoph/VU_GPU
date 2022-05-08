@@ -29,15 +29,17 @@ __global__ void populateGraph(dense_graph *d_graph, dense_node *d_nodes,
 
 __global__ void calculate(dense_graph *d_graph,
                           connected_components *d_components,
-                          component *d_comps, int *d_nodes) {
+                          component *d_comps, int *d_nodes, bool *d_used_nodes) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
              threadIdx.y;
   if (node >= d_graph->num_nodes)
     return;
+  bool *used_nodes = d_used_nodes + node * d_graph->num_nodes;
   d_comps[node].num_nodes = 0;
   int *worklist = d_nodes + node * d_graph->num_nodes;
   int wl_len = 1, wl_pos = 0;
   worklist[0] = node;
+  used_nodes[node] = true;
   while (wl_len) {
     int curr = worklist[wl_pos++];
     wl_len--;
@@ -47,15 +49,8 @@ __global__ void calculate(dense_graph *d_graph,
         d_comps[node].num_nodes = 0;
         return;
       }
-      bool seen = false;
-      for (int j = 0; j < wl_pos + wl_len; j++) {
-        if (worklist[j] == target) {
-          seen = true;
-          break;
-        }
-      }
-      if (seen)
-        continue;
+      if (used_nodes[target]) continue;
+      used_nodes[target] = true;
       worklist[wl_pos + wl_len++] = target;
     }
   }
@@ -89,8 +84,10 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
   CHECK(cudaMalloc((void **)&d_comps, sizeof(component) * graph->num_nodes));
   int *d_nodes;
   CHECK(cudaMalloc((void **)&d_nodes, sizeof(int) * graph->num_nodes * graph->num_nodes));
+  bool *d_used_nodes;
+  CHECK(cudaMalloc((void **)&d_used_nodes, sizeof(bool) * graph->num_nodes * graph->num_nodes));
   clock_t start = clock();
-  calculate<<<grid, block>>>(d_graph, d_components, d_comps, d_nodes);
+  calculate<<<grid, block>>>(d_graph, d_components, d_comps, d_nodes, d_used_nodes);
   cudaDeviceSynchronize();
   clock_t end = clock();
   // copy result back
@@ -118,6 +115,7 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
     ind++;
   }
   // free gpu memory
+  CHECK(cudaFree(d_used_nodes));
   CHECK(cudaFree(d_nodes));
   CHECK(cudaFree(d_comps));
   CHECK(cudaFree(d_components));
