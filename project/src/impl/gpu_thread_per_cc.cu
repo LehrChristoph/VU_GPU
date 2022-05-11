@@ -23,7 +23,7 @@ __global__ void populateGraph(dense_graph *d_graph, dense_node *d_nodes,
 
   ptrdiff_t idx = d_nodes[node].edges - d_nodes[0].edges;
   __syncthreads();
-  d_graph->nodes[node].edges = &d_edges[idx];
+  d_nodes[node].edges = &d_edges[idx];
   __syncthreads();
 }
 
