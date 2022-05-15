@@ -22,7 +22,7 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
             unsigned int first_index = 0;
             unsigned int last_index = 1;
             unsigned int lowest_node_id = i;
-            unsigned int *found_nodes = malloc(sizeof(unsigned int) * num_nodes);
+            unsigned int found_nodes[num_nodes];
 
             for(unsigned int j=0; j < num_nodes; j++)
             {
@@ -85,8 +85,11 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
                         }
                     }
                 }
-            }
+
+                first_index = new_first_index;
+                last_index = new_last_index;
             
+            }
             // set connected components ids
             for (unsigned int j=0; j < last_index; j++)
             {
@@ -98,6 +101,5 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
         }
     }
     
-
     return clock() - start;
 }

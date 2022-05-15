@@ -65,7 +65,12 @@ int main(int argc, char** argv) {
         {
             runtime = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components);
         }
+        else if(impl == 1 )
+        {
+            runtime = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components);
+        }
         
+        double runtime_secs= ((double) runtime) / CLOCKS_PER_SEC;
         for(unsigned int i=0; i < num_nodes;  i++)
         {
             for(unsigned int j=0; j < num_nodes; j++)
@@ -88,17 +93,11 @@ int main(int argc, char** argv) {
             printf("\n");
         }
 
+        printf("Runtime %lf\n", runtime_secs);
+
         free(connected_components);
         free(adjacency_matrix);
-        /*
-        connected_components *connected_components;
-        functions[impl](dense_graph, &connected_components);
-        write_connected_components(connected_components, stdout);
 
-        free_connected_components(connected_components);
-        free_dense(dense_graph);
-        free_graph(graph);
-        */
     } else if (strcmp(argv[1], "bench") == 0) {
         if (argc != 5) {
             printf("Usage: %s bench <rounds> <#nodes> <do-checking (0/1)>\n", argv[0]);
