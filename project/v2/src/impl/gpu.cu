@@ -6,6 +6,7 @@
 #include "impl.h"
 #include "cuda_helpers.h"
 
+
 __global__ void init(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components, unsigned int* found_nodes)
 {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
@@ -15,13 +16,13 @@ __global__ void init(unsigned int num_nodes, unsigned int *adjacency_matrix, uns
     if(i < num_nodes)
     {
         connected_components[i] = ~0;
-	for(unsigned int j=0; j < num_nodes; j++)
-	{
-		found_nodes[i*num_nodes + j] = 0;
-	}
+        for(unsigned int j=0; j < num_nodes; j++)
+        {
+            found_nodes[i*num_nodes + j] = 0;
+        }
+        found_nodes[i*num_nodes + i] = 1;
     }
 }
-
 
 __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components, unsigned int* found_nodes_global)
 {
@@ -31,60 +32,24 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
 
     if(i < num_nodes)
     {
-        unsigned int found_nodes_cnt = 1;
-        unsigned int first_index = 0;
-        unsigned int last_index = 1;
-        unsigned int lowest_node_id = i;
-        unsigned int *found_nodes = &found_nodes_global[i*num_nodes];
-        
-        found_nodes[0]=i;
-        // get inital node neightbours
-        for(unsigned int j=0; j < num_nodes; j++)
-        {
-            if(adjacency_matrix[i*num_nodes + j] !=0)
-            {
-                found_nodes[last_index] = j;
-                last_index++;
-                found_nodes_cnt++;
-                if(j < lowest_node_id)
-                {
-                    lowest_node_id = j;
-                }
-            }
-        }
-         
+        unsigned int nodes_changed = 1;
+        unsigned int lowest_node_id =i;
         // find following neighbours
-        while (found_nodes_cnt > 0)
+	while (nodes_changed > 0)
         {
-            found_nodes_cnt =0;
-            unsigned int new_first_index = last_index;
-            unsigned int new_last_index = last_index;
-        
-            for(unsigned int j=first_index; j < last_index; j++)
+            nodes_changed = 0;
+            for(unsigned int j=0; j < num_nodes; j++)
             {
-                // iterate over new found nodes
-                for(unsigned int k=0; k < num_nodes; k++)
+                //if(found_nodes_global[i*num_nodes + j] != 0)
                 {
-                    // check if neighboruing relation exists 
-                    if(adjacency_matrix[found_nodes[j]*num_nodes + k] !=0)
+                    // iterate over connected nodes
+                    for(unsigned int k=0; k < num_nodes; k++)
                     {
-                        // check if neighbouring relation was already found
-                        unsigned int node_already_found = 0;
-                        for(unsigned int l=0; l < new_last_index; l++)
+                        if(adjacency_matrix[j*num_nodes + k] != 0 && found_nodes_global[i*num_nodes + k] == 0)
                         {
-                            //printf("l Node %d\n", found_nodes[l]);
-                            if(found_nodes[l] == k)
-                            {
-                                node_already_found = 1;
-                                break;
-                            }
-                        }
-
-                        if(node_already_found == 0)
-                        {
-                            found_nodes[new_last_index] =k;
-                            new_last_index++;
-                            found_nodes_cnt++;
+                            found_nodes_global[i*num_nodes + k] = 1;
+                            found_nodes_global[k*num_nodes + i] = 1;
+                            nodes_changed++;
                             if(k < lowest_node_id)
                             {
                                 lowest_node_id = k;
@@ -93,12 +58,8 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
                     }
                 }
             }
-
-            first_index = new_first_index;
-            last_index = new_last_index;
-        
         }
-	
+
         connected_components[i] = lowest_node_id;
     }
 }
