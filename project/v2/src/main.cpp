@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         unsigned int min_weight = atoi(argv[argc-2]);
         unsigned int max_weight = atoi(argv[argc-1]);
 
-        unsigned int * adjacency_matrix = malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
+        unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
         graph_generate(adjacency_matrix, num_nodes, density, min_weight, max_weight);
         graph_write(num_nodes, adjacency_matrix, argv[2]);
         free(adjacency_matrix);
@@ -54,13 +54,13 @@ int main(int argc, char** argv) {
         } else {
             int num_nodes = atoi(argv[argc-2]);
             float density = atof(argv[argc-1]);
-            adjacency_matrix = malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
+            adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
             graph_generate(adjacency_matrix, num_nodes, density, 1, 10);
         }
         
         clock_t runtime;
 
-        unsigned int * connected_components = malloc(sizeof(unsigned int) * num_nodes);
+        unsigned int * connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
         if(impl ==0 )
         {
             runtime = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components);

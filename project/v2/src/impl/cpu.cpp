@@ -97,7 +97,6 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
                 connected_components[node] = lowest_node_id;
             }
             
-            free(found_nodes);
         }
     }
     

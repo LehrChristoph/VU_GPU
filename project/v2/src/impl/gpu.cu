@@ -6,7 +6,7 @@
 #include "impl.h"
 #include "cuda_helpers.h"
 
-__global__ void init(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components)
+__global__ void init(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components, unsigned int* found_nodes)
 {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
@@ -15,11 +15,15 @@ __global__ void init(unsigned int num_nodes, unsigned int *adjacency_matrix, uns
     if(i < num_nodes)
     {
         connected_components[i] = ~0;
+	for(unsigned int j=0; j < num_nodes; j++)
+	{
+		found_nodes[i*num_nodes + j] = 0;
+	}
     }
 }
 
 
-__global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components)
+__global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components, unsigned int* found_nodes_global)
 {
     unsigned int ix = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int iy = blockDim.y * blockIdx.y + threadIdx.y;
@@ -31,8 +35,8 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
         unsigned int first_index = 0;
         unsigned int last_index = 1;
         unsigned int lowest_node_id = i;
-        unsigned int found_nodes[num_nodes];
-
+        unsigned int *found_nodes = &found_nodes_global[i*num_nodes];
+        
         found_nodes[0]=i;
         // get inital node neightbours
         for(unsigned int j=0; j < num_nodes; j++)
@@ -48,7 +52,7 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
                 }
             }
         }
-        
+         
         // find following neighbours
         while (found_nodes_cnt > 0)
         {
@@ -94,6 +98,7 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
             last_index = new_last_index;
         
         }
+	
         connected_components[i] = lowest_node_id;
     }
 }
@@ -102,14 +107,15 @@ __global__ void calculate(unsigned int num_nodes, unsigned int *adjacency_matrix
 clock_t calculate_connected_components_gpu_simple(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int * connected_components)
 {
     clock_t start, end; 
-    unsigned int *d_adjacency_matrix,
-    unsigned int *d_connected_components
-
+    unsigned int *d_adjacency_matrix;
+    unsigned int *d_connected_components;
+    unsigned int *d_found_nodes;
 
     CHECK(cudaMalloc(&d_adjacency_matrix, sizeof(unsigned int) *num_nodes*num_nodes));
     CHECK(cudaMemcpy(d_adjacency_matrix, adjacency_matrix, sizeof(unsigned int) *num_nodes*num_nodes, cudaMemcpyHostToDevice));
 
     CHECK(cudaMalloc(&d_connected_components, sizeof(unsigned int) *num_nodes));
+    CHECK(cudaMalloc(&d_found_nodes, sizeof(unsigned int) *num_nodes*num_nodes));
 
     dim3 block, grid;
     block.x = 1024;
@@ -118,17 +124,17 @@ clock_t calculate_connected_components_gpu_simple(unsigned int num_nodes, unsign
     grid.y = 1;
 
     // init structures
-    init<<<grid, block>>>(num_nodes, d_adjacency_matrix, d_connected_components);
+    init<<<grid, block>>>(num_nodes, d_adjacency_matrix, d_connected_components, d_found_nodes);
     cudaDeviceSynchronize();
 
     start = clock();
-    calculate<<<grid, block>>>(num_nodes, d_adjacency_matrix, d_connected_components);
+    calculate<<<grid, block>>>(num_nodes, d_adjacency_matrix, d_connected_components, d_found_nodes);
     cudaDeviceSynchronize();
     end = clock();
 
-    CHECK(cudaFree(d_adjacency_matrix));
-    CHECK(cudaFree(d_connected_components));
     CHECK(cudaMemcpy(connected_components, d_connected_components, sizeof(unsigned int) *num_nodes, cudaMemcpyDeviceToHost));
+    CHECK(cudaFree(d_connected_components));
+    CHECK(cudaFree(d_adjacency_matrix));
 
     return end - start;
 }

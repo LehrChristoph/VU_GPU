@@ -57,7 +57,7 @@ unsigned int * graph_read(char* filename, unsigned int *number_of_nodes) {
     }
     
     unsigned int num_nodes = atoi(strsep(&line, " "));
-    unsigned int *adjacency_matrix = malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
+    unsigned int *adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
 
     // init adjeceny matrix
     for (unsigned int i=0; i < num_nodes; i++)
