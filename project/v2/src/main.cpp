@@ -104,57 +104,50 @@ int main(int argc, char** argv) {
             printf("Usage: %s bench <rounds> <#nodes> <do-checking (0/1)>\n", argv[0]);
             return 1;
         }
-        /*
+        
         int rounds = atoi(argv[2]);
         int num_nodes = atoi(argv[3]);
         int do_checking = atoi(argv[4]);
 
-        arr(double, mins, n_functions, {[0 ... n_functions-1] = DBL_MAX});
-        arr(double, maxs, n_functions, {[0 ... n_functions-1] = 0});
-        arr(double, sums, n_functions, {[0 ... n_functions-1] = 0});
+        double avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs;
 
-        arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC"});
-
-        clock_t dur;
-        for (int round = 0; round < rounds; round++) {
+        for (unsigned int round = 0; round < rounds; round++) {
             printf("%d nodes, %f density\n", num_nodes, (float)round/(float)rounds);
-            dense_graph *dense_graph = generate(num_nodes, (float)round/(float)rounds, 1, 1);
-            connected_components *true_components;
-            calculate_connected_components(dense_graph, &true_components);
 
-            for (int i = 0; i < n_functions; i++) {
-                connected_components *calculated;
-                dur = functions[i](dense_graph, &calculated);
+            unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
+            graph_generate(adjacency_matrix, num_nodes, density, min_weight, max_weight);
 
-                if (do_checking) {
-                    int compare_result = compare_connected_components(true_components, calculated);
-                    if (compare_result != 1) {
-                        printf("Function %s failed for graph:\n", function_names[i]);
-                        graph *out_graph = from_dense(dense_graph);
-                        write_graph(out_graph, stdout);
-                        free_graph(out_graph);
-                        printf("\n\nWith result:\n");
-                        write_connected_components(calculated, stdout);
-                        printf("\n\nShould have been:\n");
-                        write_connected_components(true_components, stdout);
-                        return compare_result;
+            unsigned int * connected_components_cpu = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+            double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
+            double runtime_cpu_secs= ((double) runtime) / CLOCKS_PER_SEC;
+            avg_runtime_cpu_secs += runtime_cpu_secs;
+
+            unsigned int * connected_components_gpu_simple = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+            double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
+            double runtime_gpu_simple_secs= ((double) runtime) / CLOCKS_PER_SEC;
+            avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
+
+            if(do_checking != 0)
+            {
+                for (unsigned int i = 0; i < num_nodes; i++) {
+                
+                    if(connected_components_cpu[i] != connected_components_gpu_simple[i])
+                    {
+                        printf("Connected components of algorithms do not match\n");
+                        break;
                     }
                 }
-
-                double duration = (double) dur / (double) CLOCKS_PER_SEC;
-                //printf("Graph with %d nodes and %d edges took %f seconds for %s\n", dense_graph->num_nodes, dense_graph->num_edges, duration, function_names[i]);
-                if (mins[i] > duration) mins[i] = duration;
-                if (maxs[i] < duration) maxs[i] = duration;
-                sums[i] += duration;
             }
 
-            free_dense(dense_graph);
-        }
+            fprintf("Runtime CPU %lf, GPU Simple %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs);
 
-        for (int i = 0; i < n_functions; i++) {
-            printf("Function %s took min %f, avg %f, max %f (total %f), speedup factor %f\n", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i], sums[0] / sums[i]);
+            free(connected_components_cpu);
+            free(connected_components_gpu_simple);
+            free(adjacency_matrix);
         }
-        */
+        fprintf("Total runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs);
+        fprintf("Average runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs/num_nodes, avg_runtime_gpu_simple_secs/num_nodes);
+        
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
     }
