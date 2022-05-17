@@ -110,21 +110,24 @@ int main(int argc, char** argv) {
         int do_checking = atoi(argv[4]);
 
         double avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs;
+        
+        unsigned int * connected_components_cpu = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+        unsigned int * connected_components_gpu_simple = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+        unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
+	
+	for (unsigned int round = 0; round < rounds; round++) {
+            float density = (float)round/(float)rounds;
+	    printf("%d nodes, %f density\n", num_nodes, density);
 
-        for (unsigned int round = 0; round < rounds; round++) {
-            printf("%d nodes, %f density\n", num_nodes, (float)round/(float)rounds);
-
-            unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
-            graph_generate(adjacency_matrix, num_nodes, density, min_weight, max_weight);
-
-            unsigned int * connected_components_cpu = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
-            double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
-            double runtime_cpu_secs= ((double) runtime) / CLOCKS_PER_SEC;
+            graph_generate(adjacency_matrix, num_nodes, density, 1, 1);
+            
+	    double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
+            double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
             avg_runtime_cpu_secs += runtime_cpu_secs;
-
+	    
             unsigned int * connected_components_gpu_simple = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
             double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-            double runtime_gpu_simple_secs= ((double) runtime) / CLOCKS_PER_SEC;
+            double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
             avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
 
             if(do_checking != 0)
@@ -138,16 +141,17 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-
-            fprintf("Runtime CPU %lf, GPU Simple %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs);
-
-            free(connected_components_cpu);
-            free(connected_components_gpu_simple);
-            free(adjacency_matrix);
+            
+            printf("Runtime CPU %lf, GPU Simple %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs);
         }
-        fprintf("Total runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs);
-        fprintf("Average runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs/num_nodes, avg_runtime_gpu_simple_secs/num_nodes);
+
+        printf("Total runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs);
+        printf("Average runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs/num_nodes, avg_runtime_gpu_simple_secs/num_nodes);
         
+	free(connected_components_cpu);
+        free(connected_components_gpu_simple);
+        free(adjacency_matrix);
+
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
     }

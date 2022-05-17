@@ -5,14 +5,14 @@
 #include "graph.h"
 
 void graph_generate(unsigned int * adjacency_matrix,unsigned int num_nodes, float density, unsigned int  min_weight, unsigned int  max_weight) {
-    if (num_nodes <= 0 || density < 0 || density > 1) {
+    if (num_nodes <= 0 || density < 0 || density > 1 || max_weight < min_weight ) {
         printf("Invalid input: num_nodes (%d) or density (%f) \n", num_nodes, density);
         return;
     }
-
+    
     // allocat matrix to store graph data
     unsigned int num_edges = (unsigned int) (num_nodes * (num_nodes - 1) * density / 2);
-    
+     
     // init adjeceny matrix
     for (unsigned int i=0; i < num_nodes; i++)
     {
@@ -21,22 +21,26 @@ void graph_generate(unsigned int * adjacency_matrix,unsigned int num_nodes, floa
             adjacency_matrix[i * num_nodes + j] = 0;
         }
     }
-    
+     
     // fill adjecency matrix with weights
     for (int i = 0; i < num_edges; i++) {
         unsigned int from = random() % num_nodes;
         unsigned int to = random() % num_nodes;
-        unsigned int  weight = min_weight + random() % (max_weight - min_weight);
-
+        unsigned int  weight = min_weight;
+	if(max_weight> min_weight)
+	{
+ 		weight += random() % (max_weight - min_weight);
+ 	}
+	
         while (from == to || adjacency_matrix[from * num_nodes + to] != 0) {
             to = random() % num_nodes;
         }
-
+	
         adjacency_matrix[from * num_nodes + to] = weight;
         adjacency_matrix[to * num_nodes + from] = weight;
         
     }
-
+    
     return;
 }
 
