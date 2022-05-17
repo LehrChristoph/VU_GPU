@@ -71,7 +71,8 @@ int main(int argc, char** argv) {
         }
         
         double runtime_secs= ((double) runtime) / CLOCKS_PER_SEC;
-        for(unsigned int i=0; i < num_nodes;  i++)
+        /* 
+	for(unsigned int i=0; i < num_nodes;  i++)
         {
             for(unsigned int j=0; j < num_nodes; j++)
             {
@@ -92,7 +93,7 @@ int main(int argc, char** argv) {
             }
             printf("\n");
         }
-
+	*/
         printf("Runtime %lf\n", runtime_secs);
 
         free(connected_components);
