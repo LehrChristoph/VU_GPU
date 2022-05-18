@@ -1,4 +1,4 @@
-SOURCE_FILES=main.c io.c graph.c generator.c impl/cpu.c impl/gpu_thread_per_cc.cu
+SOURCE_FILES=main.c io.c graph.c generator.c impl/cpu.c impl/gpu_thread_per_cc.cu impl/gpu_thread_per_cc_vector.cu
 INCLUDE_FILES=generator.h graph.h impl.h io.h cuda_helpers.h
 
 all: connected-components
