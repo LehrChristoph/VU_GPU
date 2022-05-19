@@ -125,7 +125,6 @@ int main(int argc, char** argv) {
             double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
             avg_runtime_cpu_secs += runtime_cpu_secs;
 	    
-            unsigned int * connected_components_gpu_simple = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
             double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
             double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
             avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;

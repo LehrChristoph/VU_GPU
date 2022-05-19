@@ -40,6 +40,7 @@ typedef struct {
 typedef struct {
     unsigned int num_components;
     component *components;
+    bool single_node_list;
 } connected_components;
 
 int compare_components(component first, component second);

@@ -107,9 +107,14 @@ int compare_components(component first, component second) {
 
 void free_connected_components(connected_components *connected_components) {
     if (!connected_components) return;
-    for (int i = 0; i < connected_components->num_components; i++) {
+    if (connected_components->single_node_list) {
+        free(connected_components->components->nodes);
+    } else {
+      for (int i = 0; i < connected_components->num_components; i++) {
         free(connected_components->components[i].nodes);
+      }
     }
+    free(connected_components->components);
 
     free(connected_components);
 }
