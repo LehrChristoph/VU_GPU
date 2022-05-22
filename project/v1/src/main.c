@@ -100,9 +100,12 @@ int main(int argc, char** argv) {
             connected_components *true_components;
             calculate_connected_components(dense_graph, &true_components);
 
+	    printf("Runtime ");
             for (int i = 0; i < n_functions; i++) {
+                if (i != 0) printf(", ");
                 connected_components *calculated;
                 dur = functions[i](dense_graph, &calculated);
+                printf("%s %f", function_names[i], (double) dur / (double) CLOCKS_PER_SEC);
 
                 if (do_checking) {
                     int compare_result = compare_connected_components(true_components, calculated);
@@ -127,6 +130,7 @@ int main(int argc, char** argv) {
             }
 
             free_dense(dense_graph);
+            printf("\n");
         }
 
         for (int i = 0; i < n_functions; i++) {
