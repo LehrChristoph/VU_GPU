@@ -42,12 +42,13 @@ __global__ void calculate_vec(dense_graph *d_graph, int *component_vector, int *
   if (node >= d_graph->num_nodes)
     return;
   // processing stack
-  base = base + node * d_graph->num_nodes;
+  base = &base[node * d_graph->num_nodes];
   int *stack = base;
+  memset(base, 0, d_graph->num_nodes);
   *(stack++) = node;
 
   while (base != stack) {
-    int curr = *(--stack);
+    int curr = *(--stack) & ~INT_MIN;
     // add node to cc
     int prev = atomicMax(&component_vector[curr], node);
     // already part of another, bigger cc
@@ -62,7 +63,9 @@ __global__ void calculate_vec(dense_graph *d_graph, int *component_vector, int *
         return;
       }
       // add node to worklist
-      *(stack++) = target;
+      if (base[target] & INT_MIN) continue;
+      *(stack++) = target | (*stack & INT_MIN);
+      base[target] |= INT_MIN;
     }
   }
   // increment number of ccs

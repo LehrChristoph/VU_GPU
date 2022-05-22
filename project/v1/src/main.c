@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     } else if (strcmp(argv[1], "calculate") == 0) {
         if (argc != 4 && (argc != 6 || strcmp(argv[3], "--generate"))) {
-            printf("Usage: %s calculate <impl (0-0)> <filename|--generate <#nodes> <density (0-1)>>\n", argv[0]);
+            printf("Usage: %s calculate <impl (0-%d)> <filename|--generate <#nodes> <density (0-1)>>\n", argv[0], n_functions-1);
             return 1;
         }
 
