@@ -16,7 +16,7 @@ extern "C" {
  */
 __global__ void populateGraph_vec(dense_graph *d_graph, dense_node *d_nodes,
                                   dense_edge *d_edges, void *current_base,
-                                  int *component_vector) {
+                                  int *component_vector, int *base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
              threadIdx.y;
   if (node >= d_graph->num_nodes)
@@ -33,6 +33,7 @@ __global__ void populateGraph_vec(dense_graph *d_graph, dense_node *d_nodes,
   __syncthreads();
   // update edge ptr of node using same index as before (ptr - baseptr)
   d_nodes[node].edges = &d_edges[idx];
+  memset(&base[node * d_graph->num_nodes], 0, d_graph->num_nodes);
   __syncthreads();
 }
 
@@ -44,7 +45,6 @@ __global__ void calculate_vec(dense_graph *d_graph, int *component_vector, int *
   // processing stack
   base = &base[node * d_graph->num_nodes];
   int *stack = base;
-  memset(base, 0, d_graph->num_nodes);
   *(stack++) = node;
 
   while (base != stack) {
@@ -105,7 +105,8 @@ clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
   grid.x = ceil((double)graph->num_nodes / block.x / block.y);
   grid.y = 1;
   populateGraph_vec<<<grid, block>>>(d_graph, d_gnodes, d_edges,
-                                     graph->nodes->edges, d_componentVector);
+                                     graph->nodes->edges, d_componentVector,
+                                     d_stack);
   cudaDeviceSynchronize();
   // doing calculation
   clock_t start = clock();
