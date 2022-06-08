@@ -10,9 +10,9 @@
 
 #define arr(type, name, size, ...) type name[] = __VA_ARGS__; _Static_assert(sizeof(name) / sizeof(*name) == size, #name " not initialized correctly");
 
-#define n_functions 5
+#define n_functions 7
 
-arr(connected_components_function, functions, n_functions, {calculate_connected_components, connected_components_thread_per_cc, connected_components_thread_per_cc_vector, connected_components_pinned, connected_components_vector_pinned});
+arr(connected_components_function, functions, n_functions, {calculate_connected_components, connected_components_thread_per_cc, connected_components_thread_per_cc_vector, connected_components_pinned, connected_components_vector_pinned, connected_components_zerocopy, connected_components_vector_zerocopy});
 
 int main(int argc, char** argv) {
     srandom(time(NULL));
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
         arr(double, maxs, n_functions, {[0 ... n_functions-1] = 0});
         arr(double, sums, n_functions, {[0 ... n_functions-1] = 0});
 
-        arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC", "GPU / Thread per CC (Vector)", "GPU / Pinned", "GPU / Pinned (Vector)"});
+        arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC", "GPU / Thread per CC (Vector)", "GPU / Pinned", "GPU / Pinned (Vector)", "GPU / Zero copy", "GPU / Zero copy (Vector)"});
 
         clock_t dur;
         for (int round = 0; round < rounds; round++) {
