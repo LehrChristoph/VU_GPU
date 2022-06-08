@@ -14,7 +14,7 @@ extern "C" {
 /**
  * update references that still point to host memory
  */
-__global__ void populateGraph(dense_graph *d_graph, dense_node *d_nodes,
+__global__ void populateGraphPinned(dense_graph *d_graph, dense_node *d_nodes,
                               dense_edge *d_edges, void *current_base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
              threadIdx.y;
@@ -32,7 +32,7 @@ __global__ void populateGraph(dense_graph *d_graph, dense_node *d_nodes,
   __syncthreads();
 }
 
-__global__ void calculate(dense_graph *d_graph,
+__global__ void calculate_pinned(dense_graph *d_graph,
                           connected_components *d_components,
                           component *d_comps, int *d_nodes,
                           bool *d_used_nodes) {
@@ -76,8 +76,19 @@ __global__ void calculate(dense_graph *d_graph,
 }
 
 extern "C" {
-clock_t connected_components_thread_per_cc(dense_graph *graph,
+clock_t connected_components_pinned(dense_graph *graph,
                                            connected_components **out) {
+  dense_graph *h_graph;
+  dense_node *h_gnodes;
+  dense_edge *h_edges;
+  CHECK(cudaMallocHost((void **)&h_graph, sizeof(dense_graph)));
+  CHECK(cudaMallocHost((void **)&h_gnodes, sizeof(dense_node) * graph->num_nodes));
+  CHECK(cudaMallocHost((void **)&h_edges,
+                   MAX(sizeof(dense_edge) * graph->num_edges * 2, 1)));
+  memcpy(h_graph, graph, sizeof(dense_graph));
+  memcpy(h_gnodes, graph->nodes, sizeof(dense_node) * graph->num_nodes);
+  memcpy(h_edges, graph->nodes->edges, MAX(sizeof(dense_edge) * graph->num_edges * 2, 1));
+  h_graph->nodes = h_gnodes;
   dense_graph *d_graph;
   dense_node *d_gnodes;
   dense_edge *d_edges;
@@ -89,19 +100,19 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
                    MAX(sizeof(dense_edge) * graph->num_edges * 2, 1)));
   // copy graph to device
   CHECK(
-      cudaMemcpy(d_graph, graph, sizeof(dense_graph), cudaMemcpyHostToDevice));
-  CHECK(cudaMemcpy(d_gnodes, graph->nodes,
-                   sizeof(dense_node) * graph->num_nodes,
+      cudaMemcpy(d_graph, h_graph, sizeof(dense_graph), cudaMemcpyHostToDevice));
+  CHECK(cudaMemcpy(d_gnodes, h_graph->nodes,
+                   sizeof(dense_node) * h_graph->num_nodes,
                    cudaMemcpyHostToDevice));
-  CHECK(cudaMemcpy(d_edges, graph->nodes->edges,
-                   sizeof(dense_edge) * graph->num_edges * 2,
+  CHECK(cudaMemcpy(d_edges, h_graph->nodes->edges,
+                   sizeof(dense_edge) * h_graph->num_edges * 2,
                    cudaMemcpyHostToDevice));
   dim3 block, grid;
   block.x = 32;
   block.y = 32;
   grid.x = ceil((double)graph->num_nodes / block.x / block.y);
   grid.y = 1;
-  populateGraph<<<grid, block>>>(d_graph, d_gnodes, d_edges,
+  populateGraphPinned<<<grid, block>>>(d_graph, d_gnodes, d_edges,
                                  graph->nodes->edges);
   cudaDeviceSynchronize();
   // allocate space for cc on device
@@ -117,18 +128,18 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
                    sizeof(bool) * graph->num_nodes * graph->num_nodes));
   // doing calculation
   clock_t calcStart = clock();
-  calculate<<<grid, block>>>(d_graph, d_components, d_comps, d_nodes,
+  calculate_pinned<<<grid, block>>>(d_graph, d_components, d_comps, d_nodes,
                              d_used_nodes);
   cudaDeviceSynchronize();
   clock_t calcEnd = clock();
   // copy result back
-  connected_components *components =
-      (connected_components *)malloc(sizeof(connected_components));
+  connected_components *components;
+  CHECK(cudaMallocHost((void **)&components, sizeof(connected_components)));
   CHECK(cudaMemcpy(components, d_components, sizeof(connected_components),
                    cudaMemcpyDeviceToHost));
 
-  components->components =
-      (component *)malloc(sizeof(component) * graph->num_nodes);
+  CHECK(cudaMallocHost((void **)&components->components,
+                       sizeof(component) * graph->num_nodes));
   CHECK(cudaMemcpy(components->components, d_comps,
                    sizeof(component) * graph->num_nodes,
                    cudaMemcpyDeviceToHost));
@@ -155,6 +166,9 @@ clock_t connected_components_thread_per_cc(dense_graph *graph,
   CHECK(cudaFree(d_gnodes));
   CHECK(cudaFree(d_graph));
   clock_t end = clock();
+  CHECK(cudaFreeHost(h_graph));
+  CHECK(cudaFreeHost(h_gnodes));
+  CHECK(cudaFreeHost(h_edges));
   *out = components;
   // return end - start;
   return calcEnd - calcStart;

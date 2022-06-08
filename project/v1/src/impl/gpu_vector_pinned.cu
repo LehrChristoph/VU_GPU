@@ -14,7 +14,7 @@ extern "C" {
 /**
  * update references that still point to host memory
  */
-__global__ void populateGraph_vec(dense_graph *d_graph, dense_node *d_nodes,
+__global__ void populateGraph_vec_pinned(dense_graph *d_graph, dense_node *d_nodes,
                                   dense_edge *d_edges, void *current_base,
                                   int *component_vector, int *base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
@@ -37,7 +37,7 @@ __global__ void populateGraph_vec(dense_graph *d_graph, dense_node *d_nodes,
   __syncthreads();
 }
 
-__global__ void calculate_vec(dense_graph *d_graph, int *component_vector, int *base) {
+__global__ void calculate_vec_pinned(dense_graph *d_graph, int *component_vector, int *base) {
   int node = blockIdx.x * blockDim.x * blockDim.y + threadIdx.x * blockDim.y +
              threadIdx.y;
   if (node >= d_graph->num_nodes)
@@ -73,8 +73,19 @@ __global__ void calculate_vec(dense_graph *d_graph, int *component_vector, int *
 }
 
 extern "C" {
-clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
+clock_t connected_components_vector_pinned(dense_graph *graph,
                                            connected_components **out) {
+  dense_graph *h_graph;
+  dense_node *h_gnodes;
+  dense_edge *h_edges;
+  CHECK(cudaMallocHost((void **)&h_graph, sizeof(dense_graph)));
+  CHECK(cudaMallocHost((void **)&h_gnodes, sizeof(dense_node) * graph->num_nodes));
+  CHECK(cudaMallocHost((void **)&h_edges,
+                   MAX(sizeof(dense_edge) * graph->num_edges * 2, 1)));
+  memcpy(h_graph, graph, sizeof(dense_graph));
+  memcpy(h_gnodes, graph->nodes, sizeof(dense_node) * graph->num_nodes);
+  memcpy(h_edges, graph->nodes->edges, MAX(sizeof(dense_edge) * graph->num_edges * 2, 1));
+  h_graph->nodes = h_gnodes;
   dense_graph *d_graph;
   dense_node *d_gnodes;
   dense_edge *d_edges;
@@ -86,12 +97,12 @@ clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
                    MAX(sizeof(dense_edge) * graph->num_edges * 2, 1)));
   // copy graph to device
   CHECK(
-      cudaMemcpy(d_graph, graph, sizeof(dense_graph), cudaMemcpyHostToDevice));
-  CHECK(cudaMemcpy(d_gnodes, graph->nodes,
-                   sizeof(dense_node) * graph->num_nodes,
+      cudaMemcpy(d_graph, h_graph, sizeof(dense_graph), cudaMemcpyHostToDevice));
+  CHECK(cudaMemcpy(d_gnodes, h_graph->nodes,
+                   sizeof(dense_node) * h_graph->num_nodes,
                    cudaMemcpyHostToDevice));
-  CHECK(cudaMemcpy(d_edges, graph->nodes->edges,
-                   sizeof(dense_edge) * graph->num_edges * 2,
+  CHECK(cudaMemcpy(d_edges, h_graph->nodes->edges,
+                   sizeof(dense_edge) * h_graph->num_edges * 2,
                    cudaMemcpyHostToDevice));
   // allocate space for cc on device
   int *d_componentVector;
@@ -105,19 +116,20 @@ clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
   block.y = 32;
   grid.x = ceil((double)graph->num_nodes / block.x / block.y);
   grid.y = 1;
-  populateGraph_vec<<<grid, block>>>(d_graph, d_gnodes, d_edges,
+  populateGraph_vec_pinned<<<grid, block>>>(d_graph, d_gnodes, d_edges,
                                      graph->nodes->edges, d_componentVector,
                                      d_stack);
   cudaDeviceSynchronize();
   // doing calculation
   clock_t calcStart = clock();
-  calculate_vec<<<grid, block>>>(d_graph, d_componentVector, d_stack);
+  calculate_vec_pinned<<<grid, block>>>(d_graph, d_componentVector, d_stack);
   cudaDeviceSynchronize();
   clock_t calcEnd = clock();
   // copy result back
   connected_components *components =
       (connected_components *)malloc(sizeof(connected_components));
-  int *result = (int *)malloc(sizeof(int) * (graph->num_nodes + 1));
+  int *result;
+  CHECK(cudaMallocHost((void **)&result, sizeof(int) * (graph->num_nodes + 1)));
   CHECK(cudaMemcpy(result, d_componentVector,
                    sizeof(int) * (graph->num_nodes + 1),
                    cudaMemcpyDeviceToHost));
@@ -160,7 +172,7 @@ clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
   CHECK(cudaFree(d_edges));
   CHECK(cudaFree(d_gnodes));
   CHECK(cudaFree(d_graph));
-  free(result);
+  CHECK(cudaFreeHost(result));
   *out = components;
   // return end - start;
   return calcEnd - calcStart;
