@@ -162,7 +162,10 @@ clock_t connected_components_thread_per_cc_vector(dense_graph *graph,
   CHECK(cudaFree(d_graph));
   free(result);
   *out = components;
-  // return end - start;
+  #ifdef BENCH_INCL_MEMCPY
+  return end - start;
+  #else
   return calcEnd - calcStart;
+  #endif
 }
 }
