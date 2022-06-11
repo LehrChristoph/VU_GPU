@@ -156,12 +156,12 @@ int main(int argc, char** argv) {
                     double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
                     runtime_cpu_secs_avg += runtime_cpu_secs;
 
-                    if(runtime_cpu_secs < runtime_cpu_secs_min || runtime_cpu_secs_min==0)
+                    if(runtime_cpu_secs < runtime_cpu_secs_min || round==0)
                     {
                         runtime_cpu_secs_min=runtime_cpu_secs;
                     }
 
-                    if(runtime_cpu_secs > runtime_cpu_secs_max || runtime_cpu_secs_max==0)
+                    if(runtime_cpu_secs > runtime_cpu_secs_max || round==0)
                     {
                         runtime_cpu_secs_max=runtime_cpu_secs;
                     }
@@ -170,12 +170,12 @@ int main(int argc, char** argv) {
                     double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
                     runtime_gpu_simple_secs_avg += runtime_gpu_simple_secs;
 
-                    if(runtime_gpu_simple_secs < runtime_gpu_simple_secs_min || runtime_gpu_simple_secs_min==0)
+                    if(runtime_gpu_simple_secs < runtime_gpu_simple_secs_min || round==0)
                     {
                         runtime_gpu_simple_secs_min=runtime_gpu_simple_secs;
                     }
 
-                    if(runtime_gpu_simple_secs > runtime_gpu_simple_secs_max || runtime_gpu_simple_secs_max==0)
+                    if(runtime_gpu_simple_secs > runtime_gpu_simple_secs_max || round==0)
                     {
                         runtime_gpu_simple_secs_max=runtime_gpu_simple_secs;
                     }
@@ -184,12 +184,12 @@ int main(int argc, char** argv) {
                     double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple_pinned) / CLOCKS_PER_SEC;
                     runtime_gpu_simple_pinned_secs_avg += runtime_gpu_simple_pinned_secs;
 
-                    if(runtime_gpu_simple_pinned < runtime_gpu_simple_pinned_secs_min || runtime_gpu_simple_pinned_secs_min==0)
+                    if(runtime_gpu_simple_pinned < runtime_gpu_simple_pinned_secs_min || round==0)
                     {
                         runtime_gpu_simple_pinned_secs_min=runtime_gpu_simple_pinned;
                     }
 
-                    if(runtime_gpu_simple_pinned > runtime_gpu_simple_pinned_secs_max || runtime_gpu_simple_pinned_secs_max==0)
+                    if(runtime_gpu_simple_pinned > runtime_gpu_simple_pinned_secs_max || round==0)
                     {
                        runtime_gpu_simple_pinned_secs_max=runtime_gpu_simple_pinned;
                     }
@@ -198,12 +198,12 @@ int main(int argc, char** argv) {
                     double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple_zero_copy) / CLOCKS_PER_SEC;
                     runtime_gpu_simple_zero_copy_secs_avg += runtime_gpu_simple_zero_copy_secs;
 
-                    if(runtime_gpu_simple_zero_copy_secs < runtime_gpu_simple_zero_copy_secs_min || runtime_gpu_simple_zero_copy_secs_min==0)
+                    if(runtime_gpu_simple_zero_copy_secs < runtime_gpu_simple_zero_copy_secs_min || round==0)
                     {
                         runtime_gpu_simple_zero_copy_secs_min=runtime_gpu_simple_zero_copy_secs;
                     }
 
-                    if(runtime_gpu_simple_zero_copy_secs > runtime_gpu_simple_zero_copy_secs_max || runtime_gpu_simple_zero_copy_secs_max==0)
+                    if(runtime_gpu_simple_zero_copy_secs > runtime_gpu_simple_zero_copy_secs_max || round==0)
                     {
                         runtime_gpu_simple_zero_copy_secs_max=runtime_gpu_simple_zero_copy_secs;
                     }
@@ -249,8 +249,8 @@ int main(int argc, char** argv) {
         free(connected_components_gpu_simple);
         free(adjacency_matrix);
         
-	double runtime = clock() - start;
-	printf("Total Runtime %lf\n", runtime);
+	double runtime = (clock() - start)/CLOCKS_PER_SEC;
+	printf("Total Runtime %lf\n", runtime );
 
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
