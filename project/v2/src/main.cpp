@@ -8,7 +8,7 @@
 #include "graph.h"
 #include "impl.h"
 
-#define n_functions 2
+#define n_functions 4
 
 int main(int argc, char** argv) {
     srandom(time(NULL));
@@ -70,7 +70,14 @@ int main(int argc, char** argv) {
         {
             runtime = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components);
         }
-        
+        else if(impl == 2 )
+        {
+            runtime = calculate_connected_components_gpu_simple_pinned(num_nodes, adjacency_matrix, connected_components);
+        }
+        else if(impl == 3 )
+        {
+            runtime = calculate_connected_components_gpu_simple_zero_copy(num_nodes, adjacency_matrix, connected_components);
+        }
         double runtime_secs= ((double) runtime) / CLOCKS_PER_SEC;
         /* 
 	for(unsigned int i=0; i < num_nodes;  i++)
