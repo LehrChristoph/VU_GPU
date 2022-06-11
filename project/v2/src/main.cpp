@@ -118,8 +118,6 @@ int main(int argc, char** argv) {
         int do_checking = atoi(argv[4]);
         char* file_name = argv[5];
 
-        FILE *fp = fopen(file_name, "w+");
-
         double avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs, avg_runtime_gpu_simple_pinned_secs, avg_runtime_gpu_simple_zero_copy_secs;
         
         unsigned int * connected_components_cpu = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
@@ -132,7 +130,11 @@ int main(int argc, char** argv) {
             printf("Unable to allocate memory for graph\n");
             return -1;
         }	
+
+        FILE *fp = fopen(file_name, "w+");
         fprintf(fp,"cnt;nodes;density;CPU-min;CPU-avg;CPU-max;GPU-min;GPU-avg;GPU-max;GPU-Pinned-min;GPU-Pinned-avg;GPU-Pinned-max;GPU-Zero-Copy-min;GPU-Zero-Copy-avg;GPU-Zero-Copy-max;\n");
+        fclose(fp);
+
         unsigned int cnt=0;
         for(int i=3; i>0;i--)
         {
@@ -220,13 +222,16 @@ int main(int argc, char** argv) {
 
                         }
                     }
-                    printf("Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
+
+                    printf("Density %lf, Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", density, runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
 		        }
 
                 runtime_cpu_secs_avg /= rounds;
                 runtime_gpu_simple_secs_avg /= rounds;
                 runtime_gpu_simple_pinned_secs_avg /= rounds;
                 runtime_gpu_simple_zero_copy_secs_avg /= rounds;
+                
+                fp = fopen(file_name, "w+");
 
                 fprintf(fp,"%d,%d;%f;", cnt, num_nodes, density);
                 fprintf(fp,"%f,%f;%f;", runtime_cpu_secs_min, runtime_cpu_secs_avg, runtime_cpu_secs_max);
@@ -234,16 +239,15 @@ int main(int argc, char** argv) {
                 fprintf(fp,"%f,%f;%f;", runtime_gpu_simple_pinned_secs_min, runtime_gpu_simple_pinned_secs_avg, runtime_gpu_simple_pinned_secs_max);
                 fprintf(fp,"%f,%f;%f;", runtime_gpu_simple_zero_copy_secs_min, runtime_gpu_simple_zero_copy_secs_avg, runtime_gpu_simple_zero_copy_secs_max);
                 fprintf(fp,"\n");
+
+                fclose(fp);
             }
         }
 
-        //printf("Total runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs, avg_runtime_gpu_simple_pinned_secs, avg_runtime_gpu_simple_zero_copy_secs);
-        //printf("Average runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs/num_nodes, avg_runtime_gpu_simple_secs/num_nodes, avg_runtime_gpu_simple_pinned_secs/num_nodes, avg_runtime_gpu_simple_zero_copy_secs/num_nodes);
-            
         free(connected_components_cpu);
         free(connected_components_gpu_simple);
         free(adjacency_matrix);
-        fclose(fp);
+        
 
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
