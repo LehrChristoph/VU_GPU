@@ -62,7 +62,12 @@ unsigned int * graph_read(char* filename, unsigned int *number_of_nodes) {
     
     unsigned int num_nodes = atoi(strsep(&line, " "));
     unsigned int *adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
-
+    if(adjacency_matrix == NULL)
+    {
+	    printf("Error: unable to allocate space for graph");
+	    return NULL;
+	}
+	
     // init adjeceny matrix
     for (unsigned int i=0; i < num_nodes; i++)
     {

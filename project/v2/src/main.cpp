@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
             runtime = calculate_connected_components_gpu_simple_zero_copy(num_nodes, adjacency_matrix, connected_components);
         }
         double runtime_secs= ((double) runtime) / CLOCKS_PER_SEC;
-        /* 
+         
 	for(unsigned int i=0; i < num_nodes;  i++)
         {
             for(unsigned int j=0; j < num_nodes; j++)
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
             }
             printf("\n");
         }
-	*/
+	
         printf("Runtime %lf\n", runtime_secs);
 
         free(connected_components);
@@ -124,10 +124,14 @@ int main(int argc, char** argv) {
         unsigned int * connected_components_gpu_simple_pinned = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
         unsigned int * connected_components_gpu_simple_zero_copy = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
         unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
-    
-        printf("nodes;density;CPU,GPU,Pinned;Zero-Copy\n");
-
-        for(int i=3; i>0;i++)
+        if(adjacency_matrix == NULL)
+	{
+		printf("Unable to allocate memory for graph\n");
+		return -1;
+	}	
+        printf("cnt;nodes;density;CPU,GPU,Pinned;Zero-Copy\n");
+        unsigned int cnt=0;
+        for(int i=3; i>0;i--)
         {
             for(unsigned int j=1; j<10;j++)
             {
@@ -135,25 +139,29 @@ int main(int argc, char** argv) {
 
                 for (unsigned int round = 0; round < rounds; round++) {
                     //float density = (float)round/(float)rounds;
-                    printf("%d;%f", num_nodes, density);
-
+                    printf("%d,%d;%f;", cnt, num_nodes, density);
+		    cnt++;
                     graph_generate(adjacency_matrix, num_nodes, density, 1, 1);
                         
                     double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
                     double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
                     avg_runtime_cpu_secs += runtime_cpu_secs;
-                
+         	    printf("%lf;", runtime_cpu_secs); 
+
                     double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
                     double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
                     avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
+		    printf("%lf;", runtime_gpu_simple_secs); 	
 
                     double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_pinned);
                     double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple_pinned) / CLOCKS_PER_SEC;
                     avg_runtime_gpu_simple_pinned_secs += runtime_gpu_simple_pinned_secs;
+		    printf("%lf;", runtime_gpu_simple_pinned_secs); 
 
                     double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_zero_copy);
                     double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple_zero_copy) / CLOCKS_PER_SEC;
                     avg_runtime_gpu_simple_zero_copy_secs += runtime_gpu_simple_zero_copy_secs;
+		    printf("%lf;", runtime_gpu_simple_zero_copy_secs); 
 
                     if(do_checking != 0)
                     {
@@ -172,8 +180,9 @@ int main(int argc, char** argv) {
                     }
                     
         //            printf("Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
-                    printf("%lf;%lf;%lf;%lf\n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
-                }
+                    //printf("%lf;%lf;%lf;%lf\n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
+                    printf("\n");
+		}
             }
         }
 
