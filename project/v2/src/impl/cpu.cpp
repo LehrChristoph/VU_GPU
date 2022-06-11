@@ -26,7 +26,7 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
             unsigned int current_index = 0;
             unsigned int last_index = 1;
             unsigned int lowest_node_id = i;
-
+ 	    found_nodes[0] = i;
             // find following neighbours
             while (current_index < last_index)
             {
@@ -58,8 +58,8 @@ clock_t calculate_connected_components_cpu(unsigned int num_nodes, unsigned int 
                         }
                     }
                 }        
-                current_index++;
-            }
+		current_index++;
+	    }
             // set connected components ids
             for (unsigned int j=0; j < last_index; j++)
             {
