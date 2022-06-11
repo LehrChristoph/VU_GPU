@@ -147,13 +147,13 @@ int main(int argc, char** argv) {
                     double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
                     avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
 
-                    double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-                    double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-                    avg_runtime_gpu_simple_pinned_secs += runtime_gpu_simple_secs;
+                    double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_pinned);
+                    double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple_pinned) / CLOCKS_PER_SEC;
+                    avg_runtime_gpu_simple_pinned_secs += runtime_gpu_simple_pinned_secs;
 
-                    double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-                    double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-                    avg_runtime_gpu_simple_zero_copy_secs += runtime_gpu_simple_secs;
+                    double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_zero_copy);
+                    double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple_zero_copy) / CLOCKS_PER_SEC;
+                    avg_runtime_gpu_simple_zero_copy_secs += runtime_gpu_simple_zero_copy_secs;
 
                     if(do_checking != 0)
                     {
@@ -167,6 +167,7 @@ int main(int argc, char** argv) {
                                 printf("Connected components of algorithms do not match\n");
                                 break;
                             }
+
                         }
                     }
                     
