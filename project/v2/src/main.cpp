@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <float.h>
+#include <math.h>
 
 #include "graph.h"
 #include "impl.h"
@@ -118,45 +119,54 @@ int main(int argc, char** argv) {
         unsigned int * adjacency_matrix = (unsigned int *) malloc(sizeof(unsigned int ) * num_nodes * num_nodes);
     
         printf("nodes;density;CPU,GPU,Pinned;Zero-Copy\n");
-        for (unsigned int round = 0; round < rounds; round++) {
-            float density = (float)round/(float)rounds;
-            printf("%d;%f", num_nodes, density);
 
-            graph_generate(adjacency_matrix, num_nodes, density, 1, 1);
-                
-            double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
-            double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
-            avg_runtime_cpu_secs += runtime_cpu_secs;
-        
-            double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-            double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-            avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
-
-            double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-            double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-            avg_runtime_gpu_simple_pinned_secs += runtime_gpu_simple_secs;
-
-            double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
-            double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-            avg_runtime_gpu_simple_zero_copy_secs += runtime_gpu_simple_secs;
-
-            if(do_checking != 0)
+        for(int i=3; i>0;i++)
+        {
+            for(unsigned int j=1; j<10;j++)
             {
-                for (unsigned int i = 0; i < num_nodes; i++) {
+                float density =  pow(10, -i)*j;
+
+                for (unsigned int round = 0; round < rounds; round++) {
+                    //float density = (float)round/(float)rounds;
+                    printf("%d;%f", num_nodes, density);
+
+                    graph_generate(adjacency_matrix, num_nodes, density, 1, 1);
+                        
+                    double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
+                    double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
+                    avg_runtime_cpu_secs += runtime_cpu_secs;
                 
-                    if( connected_components_cpu[i] != connected_components_gpu_simple[i] ||
-                        connected_components_cpu[i] != connected_components_gpu_simple_pinned[i] ||
-                        connected_components_cpu[i] != connected_components_gpu_simple_zero_copy[i] 
-                    )
+                    double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
+                    double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
+                    avg_runtime_gpu_simple_secs += runtime_gpu_simple_secs;
+
+                    double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
+                    double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
+                    avg_runtime_gpu_simple_pinned_secs += runtime_gpu_simple_secs;
+
+                    double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
+                    double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
+                    avg_runtime_gpu_simple_zero_copy_secs += runtime_gpu_simple_secs;
+
+                    if(do_checking != 0)
                     {
-                        printf("Connected components of algorithms do not match\n");
-                        break;
+                        for (unsigned int i = 0; i < num_nodes; i++) {
+                        
+                            if( connected_components_cpu[i] != connected_components_gpu_simple[i] ||
+                                connected_components_cpu[i] != connected_components_gpu_simple_pinned[i] ||
+                                connected_components_cpu[i] != connected_components_gpu_simple_zero_copy[i] 
+                            )
+                            {
+                                printf("Connected components of algorithms do not match\n");
+                                break;
+                            }
+                        }
                     }
+                    
+        //            printf("Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
+                    printf("%lf;%lf;%lf;%lf\n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
                 }
             }
-            
-//            printf("Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
-            printf("%lf;%lf;%lf;%lf\n", runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
         }
 
         //printf("Total runtime CPU %lf, GPU Simple %lf \n", avg_runtime_cpu_secs, avg_runtime_gpu_simple_secs, avg_runtime_gpu_simple_pinned_secs, avg_runtime_gpu_simple_zero_copy_secs);
