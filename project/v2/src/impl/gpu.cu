@@ -217,7 +217,7 @@ clock_t calculate_connected_components_gpu_simple_zero_copy(unsigned int num_nod
     unsigned int *d_found_nodes;
 
     CHECK(cudaHostAlloc(&h_adjacency_matrix, sizeof(unsigned int) *num_nodes*num_nodes, cudaHostAllocMapped));
-    memcpy(h_adjacency_matrix, adjacency_matrix, sizeof(unsigned int) *num_nodes*num_nodes, cudaMemcpyHostToDevice);
+    memcpy(h_adjacency_matrix, adjacency_matrix, sizeof(unsigned int) *num_nodes*num_nodes);
     CHECK(cudaHostGetDevicePointer((void **)&d_adjacency_matrix, (void *)h_adjacency_matrix, 0));
 
     CHECK(cudaMalloc(&d_connected_components, sizeof(unsigned int) *num_nodes));
