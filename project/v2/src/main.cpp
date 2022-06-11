@@ -134,6 +134,7 @@ int main(int argc, char** argv) {
         FILE *fp = fopen(file_name, "w+");
         fprintf(fp,"cnt;nodes;density;CPU-min;CPU-avg;CPU-max;GPU-min;GPU-avg;GPU-max;GPU-Pinned-min;GPU-Pinned-avg;GPU-Pinned-max;GPU-Zero-Copy-min;GPU-Zero-Copy-avg;GPU-Zero-Copy-max;\n");
         fclose(fp);
+	clock_t start = clock();
 
         unsigned int cnt=0;
         for(int i=3; i>0;i--)
@@ -231,7 +232,7 @@ int main(int argc, char** argv) {
                 runtime_gpu_simple_pinned_secs_avg /= rounds;
                 runtime_gpu_simple_zero_copy_secs_avg /= rounds;
                 
-                fp = fopen(file_name, "w+");
+                fp = fopen(file_name, "a");
 
                 fprintf(fp,"%d,%d;%f;", cnt, num_nodes, density);
                 fprintf(fp,"%f,%f;%f;", runtime_cpu_secs_min, runtime_cpu_secs_avg, runtime_cpu_secs_max);
@@ -248,6 +249,8 @@ int main(int argc, char** argv) {
         free(connected_components_gpu_simple);
         free(adjacency_matrix);
         
+	double runtime = clock() - start;
+	printf("Total Runtime %lf\n", runtime);
 
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
