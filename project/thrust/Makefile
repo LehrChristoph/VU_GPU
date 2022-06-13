@@ -9,5 +9,11 @@ connected-components: $(addprefix src/,$(SOURCE_FILES)) $(addprefix include/,$(I
 test: connected-components
 		./connected-components bench 10 10000 1
 
+evaluate.csv: connected-components $(wildcard ../evaluate/*) ../evaluate/
+	./connected-components evaluate ../evaluate/ > evaluate.csv
+
+clean:
+	rm -f connected-components evaluate.csv
+
 .PHONY: test
 

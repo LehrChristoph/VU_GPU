@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <float.h>
+#include <dirent.h>
+#include <libgen.h>
+#include <linux/limits.h>
 
 #include "io.h"
 #include "generator.h"
@@ -14,10 +17,28 @@
 
 arr(connected_components_function, functions, n_functions, {calculate_connected_components, connected_components_thread_per_cc, connected_components_thread_per_cc_vector, connected_components_pinned, connected_components_vector_pinned, connected_components_zerocopy, connected_components_vector_zerocopy});
 
+int evaluate(char *filename) {
+    printf("%s", basename(filename));
+
+    graph *graph = read_graph(filename);
+    dense_graph *dense_graph = to_dense(graph);
+
+    for (int impl = 0; impl < n_functions; impl++) {
+        connected_components *connected_components;
+        double duration = (double) functions[impl](dense_graph, &connected_components) / (double) CLOCKS_PER_SEC;
+        printf(";%f", duration);
+    }
+    printf("\n");
+
+    free_dense(dense_graph);
+    free_graph(graph);
+}
+
 int main(int argc, char** argv) {
+    arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC", "GPU / Thread per CC (Vector)", "GPU / Pinned", "GPU / Pinned (Vector)", "GPU / Zero copy", "GPU / Zero copy (Vector)"});
     srandom(time(NULL));
     if (argc == 1) {
-        printf("Usage: [generate|bench|calculate] ...\n");
+        printf("Usage: [generate|bench|calculate|evaluate] ...\n");
         return 1;
     }
     if (strcmp(argv[1], "generate") == 0) {
@@ -91,8 +112,6 @@ int main(int argc, char** argv) {
         arr(double, maxs, n_functions, {[0 ... n_functions-1] = 0});
         arr(double, sums, n_functions, {[0 ... n_functions-1] = 0});
 
-        arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC", "GPU / Thread per CC (Vector)", "GPU / Pinned", "GPU / Pinned (Vector)", "GPU / Zero copy", "GPU / Zero copy (Vector)"});
-
         clock_t dur;
         for (int round = 0; round < rounds; round++) {
             printf("%d nodes, %f density\n", num_nodes, (float)round/(float)rounds);
@@ -137,7 +156,34 @@ int main(int argc, char** argv) {
             printf("Function %s took min %f, avg %f, max %f (total %f), speedup factor %f\n", function_names[i], mins[i], sums[i]/(double)rounds, maxs[i], sums[i], sums[0] / sums[i]);
         }
 
+    } else if (strcmp(argv[1], "evaluate") == 0) {
+        if (argc != 3) {
+            printf("Usage: %s evaluate <folder>\n", argv[0]);
+            return 1;
+        }
+
+        printf("graph");
+        for (int impl = 0; impl < n_functions; impl++) {
+            printf(";v1 %s", function_names[impl]);
+        }
+        printf("\n");
+
+        char path[PATH_MAX];
+        DIR *dir;
+        struct dirent *ent;
+        if ((dir = opendir(argv[2])) != NULL) {
+            while ((ent = readdir(dir)) != NULL) {
+                if (ent->d_type != DT_REG) continue;
+                sprintf(path, "%s/%s", argv[2], ent->d_name);
+                evaluate(path);
+            }
+            closedir(dir);
+        } else {
+            perror("could not open evaluation folder");
+            return 2;
+        }
+
     } else {
-        printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
+        printf("Unknown command %s, available: generate, bench, calculate, evaluate\n", argv[1]);
     }
 }

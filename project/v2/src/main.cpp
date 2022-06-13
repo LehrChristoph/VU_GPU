@@ -4,11 +4,35 @@
 #include <time.h>
 #include <float.h>
 #include <math.h>
+#include <dirent.h>
+#include <libgen.h>
+#include <linux/limits.h>
 
 #include "graph.h"
 #include "impl.h"
 
 #define n_functions 4
+
+typedef clock_t (*connected_components_function)(unsigned int, unsigned int *, unsigned int *);
+char* function_names[n_functions] = {"CPU", "GPU", "GPU Pinned", "GPU Zero Copy"};
+connected_components_function functions[n_functions] = { calculate_connected_components_cpu, calculate_connected_components_gpu_simple, calculate_connected_components_gpu_simple_pinned, calculate_connected_components_gpu_simple_zero_copy };
+
+void evaluate(char *filename) {
+    printf("%s", basename(filename));
+
+    clock_t runtime;
+    for (int impl = 0; impl < n_functions; impl++) {
+        unsigned int num_nodes;
+        unsigned int *adjacency_matrix = graph_read(filename, &num_nodes);
+        unsigned int * connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+        runtime = functions[impl](num_nodes, adjacency_matrix, connected_components);
+        printf(";%f", ((double) runtime) / CLOCKS_PER_SEC);
+        free(connected_components);
+        free(adjacency_matrix);
+    }
+
+    printf("\n");
+}
 
 int main(int argc, char** argv) {
     srandom(time(NULL));
@@ -252,6 +276,29 @@ int main(int argc, char** argv) {
 	double runtime = (clock() - start)/CLOCKS_PER_SEC;
 	printf("Total Runtime %lf\n", runtime );
 
+    } else if (strcmp(argv[1], "evaluate") == 0) {
+        printf("graph");
+        for (int impl = 0; impl < n_functions; impl++) {
+            printf(";v1 %s", function_names[impl]);
+        }
+        printf("\n");
+
+        char path[PATH_MAX];
+        DIR *dir;
+        struct dirent *ent;
+        if ((dir = opendir(argv[2])) != NULL) {
+            while ((ent = readdir(dir)) != NULL) {
+                if (ent->d_type != DT_REG) continue;
+                sprintf(path, "%s/%s", argv[2], ent->d_name);
+                evaluate(path);
+            }
+            closedir(dir);
+        } else {
+            perror("could not open evaluation folder");
+            return 2;
+        }
+
+        return 0;
     } else {
         printf("Unknown command %s, available: generate, bench, calculate\n", argv[0]);
     }

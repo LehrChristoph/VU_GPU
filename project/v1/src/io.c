@@ -31,7 +31,7 @@ graph *read_graph(char* filename) {
     }
     int undirected = atoi(strsep(&line, " "));
     if (undirected != 1) {
-        FILE_ERR("Ivalid input file (undirected is set to %d, must be 1)\n", undirected);
+        FILE_ERR("Invalid input file (undirected is set to %d, must be 1)\n", undirected);
     }
     out->edges = malloc(sizeof(edge) * out->num_edges);
     for (int i = 0; i < out->num_edges; i++) {
