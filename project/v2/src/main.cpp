@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
                         
                     double runtime_cpu = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components_cpu);
                     double runtime_cpu_secs= ((double) runtime_cpu) / CLOCKS_PER_SEC;
-                    runtime_cpu_secs_avg += runtime_cpu_secs;
+                    runtime_cpu_secs_avg += runtime_cpu;
 
                     if(runtime_cpu_secs < runtime_cpu_secs_min || round==0)
                     {
@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
 
                     double runtime_gpu_simple = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple);
                     double runtime_gpu_simple_secs= ((double) runtime_gpu_simple) / CLOCKS_PER_SEC;
-                    runtime_gpu_simple_secs_avg += runtime_gpu_simple_secs;
+                    runtime_gpu_simple_secs_avg += runtime_gpu_simple;
 
                     if(runtime_gpu_simple_secs < runtime_gpu_simple_secs_min || round==0)
                     {
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
 
                     double runtime_gpu_simple_pinned = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_pinned);
                     double runtime_gpu_simple_pinned_secs= ((double) runtime_gpu_simple_pinned) / CLOCKS_PER_SEC;
-                    runtime_gpu_simple_pinned_secs_avg += runtime_gpu_simple_pinned_secs;
+                    runtime_gpu_simple_pinned_secs_avg += runtime_gpu_simple_pinned;
 
                     if(runtime_gpu_simple_pinned < runtime_gpu_simple_pinned_secs_min || round==0)
                     {
@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
 
                     double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_zero_copy);
                     double runtime_gpu_simple_zero_copy_secs= ((double) runtime_gpu_simple_zero_copy) / CLOCKS_PER_SEC;
-                    runtime_gpu_simple_zero_copy_secs_avg += runtime_gpu_simple_zero_copy_secs;
+                    runtime_gpu_simple_zero_copy_secs_avg += runtime_gpu_simple_zero_copy;
 
                     if(runtime_gpu_simple_zero_copy_secs < runtime_gpu_simple_zero_copy_secs_min || round==0)
                     {
@@ -251,18 +251,18 @@ int main(int argc, char** argv) {
                     printf("Density %lf, Runtime CPU %lf, GPU Simple %lf, GPU Pinned: %lf, GPU Zero-Copy %lf \n", density, runtime_cpu_secs, runtime_gpu_simple_secs, runtime_gpu_simple_pinned_secs, runtime_gpu_simple_zero_copy_secs);
 		        }
 
-                runtime_cpu_secs_avg /= rounds;
-                runtime_gpu_simple_secs_avg /= rounds;
-                runtime_gpu_simple_pinned_secs_avg /= rounds;
-                runtime_gpu_simple_zero_copy_secs_avg /= rounds;
+                runtime_cpu_secs_avg = runtime_cpu_secs_avg / rounds / CLOCKS_PER_SEC;
+                runtime_gpu_simple_secs_avg = runtime_gpu_simple_secs_avg / rounds / CLOCKS_PER_SEC;
+                runtime_gpu_simple_pinned_secs_avg = runtime_gpu_simple_pinned_secs_avg / rounds / CLOCKS_PER_SEC;
+                runtime_gpu_simple_zero_copy_secs_avg = runtime_gpu_simple_zero_copy_secs_avg / rounds / CLOCKS_PER_SEC;
                 
                 fp = fopen(file_name, "a");
 
-                fprintf(fp,"%d,%d;%f;", cnt, num_nodes, density);
-                fprintf(fp,"%f,%f;%f;", runtime_cpu_secs_min, runtime_cpu_secs_avg, runtime_cpu_secs_max);
-                fprintf(fp,"%f,%f;%f;", runtime_gpu_simple_secs_min, runtime_gpu_simple_secs_avg, runtime_gpu_simple_secs_max);
-                fprintf(fp,"%f,%f;%f;", runtime_gpu_simple_pinned_secs_min, runtime_gpu_simple_pinned_secs_avg, runtime_gpu_simple_pinned_secs_max);
-                fprintf(fp,"%f,%f;%f;", runtime_gpu_simple_zero_copy_secs_min, runtime_gpu_simple_zero_copy_secs_avg, runtime_gpu_simple_zero_copy_secs_max);
+                fprintf(fp,"%d;%d;%f;", cnt, num_nodes, density);
+                fprintf(fp,"%f;%f;%f;", runtime_cpu_secs_min, runtime_cpu_secs_avg, runtime_cpu_secs_max);
+                fprintf(fp,"%f;%f;%f;", runtime_gpu_simple_secs_min, runtime_gpu_simple_secs_avg, runtime_gpu_simple_secs_max);
+                fprintf(fp,"%f;%f;%f;", runtime_gpu_simple_pinned_secs_min, runtime_gpu_simple_pinned_secs_avg, runtime_gpu_simple_pinned_secs_max);
+                fprintf(fp,"%f;%f;%f;", runtime_gpu_simple_zero_copy_secs_min, runtime_gpu_simple_zero_copy_secs_avg, runtime_gpu_simple_zero_copy_secs_max);
                 fprintf(fp,"\n");
 
                 fclose(fp);
