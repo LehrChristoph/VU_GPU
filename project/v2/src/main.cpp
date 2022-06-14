@@ -210,12 +210,12 @@ int main(int argc, char** argv) {
 
                     if(runtime_gpu_simple_pinned < runtime_gpu_simple_pinned_secs_min || round==0)
                     {
-                        runtime_gpu_simple_pinned_secs_min=runtime_gpu_simple_pinned;
+                        runtime_gpu_simple_pinned_secs_min=runtime_gpu_simple_pinned_secs;
                     }
 
                     if(runtime_gpu_simple_pinned > runtime_gpu_simple_pinned_secs_max || round==0)
                     {
-                       runtime_gpu_simple_pinned_secs_max=runtime_gpu_simple_pinned;
+                       runtime_gpu_simple_pinned_secs_max=runtime_gpu_simple_pinned_secs;
                     }
 
                     double runtime_gpu_simple_zero_copy = calculate_connected_components_gpu_simple(num_nodes, adjacency_matrix, connected_components_gpu_simple_zero_copy);
