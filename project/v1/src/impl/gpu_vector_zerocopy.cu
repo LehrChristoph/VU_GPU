@@ -119,9 +119,6 @@ clock_t connected_components_vector_zerocopy(dense_graph *graph,
   // copy result back
   connected_components *components =
       (connected_components *)malloc(sizeof(connected_components));
-  CHECK(cudaMemcpy(result, d_componentVector,
-                   sizeof(int) * (graph->num_nodes + 1),
-                   cudaMemcpyDeviceToHost));
   clock_t end = clock();
   components->num_components = result[graph->num_nodes];
   components->components =
