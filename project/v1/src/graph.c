@@ -1,3 +1,4 @@
+#include <cuda_runtime.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -114,7 +115,12 @@ void free_connected_components(connected_components *connected_components) {
         free(connected_components->components[i].nodes);
       }
     }
-    free(connected_components->components);
+    // try cuda free, else normal free
+    if (cudaFreeHost(connected_components->components) != 0) {
+        free(connected_components->components);
+    }
 
-    free(connected_components);
+    if (cudaFreeHost(connected_components) != 0) {
+        free(connected_components);
+    }
 }
