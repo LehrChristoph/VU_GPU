@@ -129,10 +129,6 @@ clock_t connected_components_zerocopy(dense_graph *graph,
   clock_t calcEnd = clock();
   // copy result back
 
-  CHECK(cudaMemcpy(components->components, d_comps,
-                   sizeof(component) * graph->num_nodes,
-                   cudaMemcpyDeviceToHost));
-
   int ind = 0;
   for (int i = 0; i < graph->num_nodes; i++) {
     if (!components->components[i].num_nodes)
