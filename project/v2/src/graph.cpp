@@ -90,6 +90,7 @@ unsigned int * graph_read(char* filename, unsigned int *number_of_nodes) {
         unsigned int j = atoi(strsep(&line, " "));
         unsigned int weight = atoi(strsep(&line, " "));
         adjacency_matrix[i * num_nodes + j] = weight;
+        adjacency_matrix[j * num_nodes + i] = weight;
     }
     fclose(fp);
 

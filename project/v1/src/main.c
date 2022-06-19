@@ -18,6 +18,8 @@
 arr(connected_components_function, functions, n_functions, {calculate_connected_components, connected_components_thread_per_cc, connected_components_thread_per_cc_vector, connected_components_pinned, connected_components_vector_pinned, connected_components_zerocopy, connected_components_vector_zerocopy});
 
 int evaluate(char *filename) {
+    arr(char*, function_names, n_functions, {"CPU", "GPU / Thread per CC", "GPU / Thread per CC (Vector)", "GPU / Pinned", "GPU / Pinned (Vector)", "GPU / Zero copy", "GPU / Zero copy (Vector)"});
+    fprintf(stderr, "Graph: %s\n", basename(filename));
     printf("%s", basename(filename));
 
     graph *graph = read_graph(filename);
@@ -25,6 +27,7 @@ int evaluate(char *filename) {
 
     for (int impl = 0; impl < n_functions; impl++) {
         connected_components *connected_components;
+        fprintf(stderr, "- v1 %s\n", function_names[impl]);
         double duration = (double) functions[impl](dense_graph, &connected_components) / (double) CLOCKS_PER_SEC;
         printf(";%f", duration);
     }
@@ -175,7 +178,7 @@ int main(int argc, char** argv) {
             while ((ent = readdir(dir)) != NULL) {
                 if (ent->d_type != DT_REG) continue;
                 sprintf(path, "%s/%s", argv[2], ent->d_name);
-                evaluate(path);
+                if (basename(path)[0] != '_') evaluate(path);
             }
             closedir(dir);
         } else {

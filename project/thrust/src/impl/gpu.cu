@@ -85,7 +85,7 @@ void calculate(unsigned int num_nodes, thrust::device_vector<unsigned int> adjac
     }
 #endif // DEBUG
 
-    for (int n = 0; n < 300; n++) {
+    for (int n = 0; n < num_nodes*num_nodes; n++) {
 #ifdef DEBUG
         printf("\n\n%d:\n\n", n);
 #endif // DEBUG
@@ -143,6 +143,8 @@ void calculate(unsigned int num_nodes, thrust::device_vector<unsigned int> adjac
         }
 #endif // DEBUG
     }
+
+    printf("FAILED\n");
 }
 
 clock_t calculate_connected_components_gpu_thrust(unsigned int num_nodes, unsigned int *adjacency_matrix, unsigned int *connected_components) {

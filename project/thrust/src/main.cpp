@@ -142,6 +142,7 @@ int bench(int argc, char** argv) {
 }
 
 void evaluate(char *filename) {
+    fprintf(stderr, "Graph: %s\n", basename(filename));
     printf("%s", basename(filename));
 
     clock_t runtime;
@@ -151,12 +152,7 @@ void evaluate(char *filename) {
 
     adjacency_matrix = graph_read(filename, &num_nodes);
     connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
-    runtime = calculate_connected_components_cpu(num_nodes, adjacency_matrix, connected_components);
-    printf(";%f", ((double) runtime) / CLOCKS_PER_SEC);
-    free(connected_components);
-
-    adjacency_matrix = graph_read(filename, &num_nodes);
-    connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
+    fprintf(stderr, "- thrust GPU\n");
     runtime = calculate_connected_components_gpu_thrust(num_nodes, adjacency_matrix, connected_components);
     printf(";%f", ((double) runtime) / CLOCKS_PER_SEC);
     free(connected_components);
@@ -166,7 +162,7 @@ void evaluate(char *filename) {
 }
 
 int run_evaluate(int argc, char** argv) {
-    printf("graph;thrust CPU;thrust GPU\n");
+    printf("graph;thrust GPU\n");
 
     char path[PATH_MAX];
     DIR *dir;

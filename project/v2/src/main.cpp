@@ -19,9 +19,11 @@ connected_components_function functions[n_functions] = { calculate_connected_com
 
 void evaluate(char *filename) {
     printf("%s", basename(filename));
+    fprintf(stderr, "Graph: %s\n", basename(filename));
 
     clock_t runtime;
     for (int impl = 0; impl < n_functions; impl++) {
+        fprintf(stderr, "- v2 %s\n", function_names[impl]);
         unsigned int num_nodes;
         unsigned int *adjacency_matrix = graph_read(filename, &num_nodes);
         unsigned int * connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
@@ -290,7 +292,7 @@ int main(int argc, char** argv) {
             while ((ent = readdir(dir)) != NULL) {
                 if (ent->d_type != DT_REG) continue;
                 sprintf(path, "%s/%s", argv[2], ent->d_name);
-                evaluate(path);
+                if (basename(path)[0] != '_') evaluate(path);
             }
             closedir(dir);
         } else {

@@ -10,7 +10,7 @@ test: connected-components
 		./connected-components bench 1 10 1
 
 evaluate.csv: connected-components $(wildcard ../evaluate/*) ../evaluate/
-	./connected-components evaluate ../evaluate/ > evaluate.csv
+	./connected-components evaluate ../evaluate/ >> evaluate.csv
 
 clean:
 	rm -f connected-components evaluate.csv
