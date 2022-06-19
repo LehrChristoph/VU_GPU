@@ -27,7 +27,7 @@ int evaluate(char *filename) {
 
     for (int impl = 0; impl < n_functions; impl++) {
         connected_components *connected_components;
-        fprintf(stderr, "- v1 %s\n", function_names[impl]);
+        fprintf(stderr, "- sparse %s\n", function_names[impl]);
         double duration = (double) functions[impl](dense_graph, &connected_components) / (double) CLOCKS_PER_SEC;
         printf(";%f", duration);
     }
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
 
         printf("graph");
         for (int impl = 0; impl < n_functions; impl++) {
-            printf(";v1 %s", function_names[impl]);
+            printf(";sparse %s", function_names[impl]);
         }
         printf("\n");
 

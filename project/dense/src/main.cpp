@@ -23,7 +23,7 @@ void evaluate(char *filename) {
 
     clock_t runtime;
     for (int impl = 0; impl < n_functions; impl++) {
-        fprintf(stderr, "- v2 %s\n", function_names[impl]);
+        fprintf(stderr, "- dense %s\n", function_names[impl]);
         unsigned int num_nodes;
         unsigned int *adjacency_matrix = graph_read(filename, &num_nodes);
         unsigned int * connected_components = (unsigned int *) malloc(sizeof(unsigned int) * num_nodes);
@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[1], "evaluate") == 0) {
         printf("graph");
         for (int impl = 0; impl < n_functions; impl++) {
-            printf(";v1 %s", function_names[impl]);
+            printf(";dense %s", function_names[impl]);
         }
         printf("\n");
 
